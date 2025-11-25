@@ -1,5 +1,7 @@
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import Link from "next/link"
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
 
 export const metadata = {
   title: "Terms & Conditions - Buzzycash Ghana",
@@ -8,36 +10,42 @@ export const metadata = {
 
 export default function TermsAndConditionsPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-      {/* Header */}
-      <div className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800 py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 text-balance">Terms &amp; Conditions</h1>
-          <p className="text-lg text-slate-300">
-            Please read these Terms and Conditions carefully before using Buzzycash Ghana
-          </p>
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-1 bg-background">
+        {/* Page Header */}
+        <div className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
+          <div className="container mx-auto px-4 py-16 sm:py-20">
+            <div className="max-w-4xl mx-auto text-center">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+                Terms & Conditions
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                Please read these Terms and Conditions carefully before using Buzzycash Ghana
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Important Notice */}
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-6 mb-12">
-          <p className="text-slate-200">
-            By continuing to use Buzzycash Ghana through our USSD service{" "}
-            <span className="font-bold text-amber-400">*245#</span>, you acknowledge that you have read, understood, and
-            agreed to these Terms and Conditions.
-          </p>
-        </div>
+        {/* Main Content */}
+        <div className="container mx-auto px-4 py-12">
+          {/* Important Notice */}
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-6 mb-12 max-w-4xl mx-auto">
+            <p className="text-foreground">
+              By continuing to use Buzzycash Ghana through our USSD service{" "}
+              <span className="font-bold text-yellow-600">*245#</span>, you acknowledge that you have read, understood, and
+              agreed to these Terms and Conditions.
+            </p>
+          </div>
 
         {/* Accordion Content */}
         <Accordion type="single" collapsible className="space-y-2">
           {/* Introduction */}
           <AccordionItem value="introduction">
-            <AccordionTrigger className="text-lg font-semibold text-white hover:text-amber-400">
+            <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary">
               I. Introduction
             </AccordionTrigger>
-            <AccordionContent className="text-slate-300 space-y-4">
+            <AccordionContent className="text-muted-foreground space-y-4">
               <p>
                 These Terms and Conditions ("Terms" or "T&C") govern your use of the gaming and entertainment services
                 provided by Buzzycash Ghana, a duly registered company operating under the laws of the Republic of
@@ -66,13 +74,13 @@ export default function TermsAndConditionsPage() {
 
           {/* General Terms and Conditions */}
           <AccordionItem value="general-terms">
-            <AccordionTrigger className="text-lg font-semibold text-white hover:text-amber-400">
+            <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary">
               II. General Terms and Conditions
             </AccordionTrigger>
             <AccordionContent className="text-slate-300 space-y-6">
               {/* Acceptance of Terms */}
               <div>
-                <h4 className="font-semibold text-white mb-2">2.1 Acceptance of Terms</h4>
+                <h4 className="font-semibold text-foreground mb-2">2.1 Acceptance of Terms</h4>
                 <p>
                   By dialing *245# and playing any game on Buzzycash Ghana, you agree to these Terms and Conditions
                   ("Terms"). If you do not accept them, please discontinue use of the Service.
@@ -81,7 +89,7 @@ export default function TermsAndConditionsPage() {
 
               {/* Eligibility */}
               <div>
-                <h4 className="font-semibold text-white mb-2">2.2 Eligibility</h4>
+                <h4 className="font-semibold text-foreground mb-2">2.2 Eligibility</h4>
                 <ul className="list-disc list-inside space-y-2 ml-2">
                   <li>You must be 18 years or older and a resident of Ghana</li>
                   <li>You must have a valid mobile number registered in your name</li>
@@ -94,7 +102,7 @@ export default function TermsAndConditionsPage() {
 
               {/* Channel of Access */}
               <div>
-                <h4 className="font-semibold text-white mb-2">2.3 Channel of Access</h4>
+                <h4 className="font-semibold text-foreground mb-2">2.3 Channel of Access</h4>
                 <ul className="list-disc list-inside space-y-2 ml-2">
                   <li>All Buzzycash Ghana games are available only via USSD *245#</li>
                   <li>No web, app, or SMS betting channels are currently offered</li>
@@ -103,7 +111,7 @@ export default function TermsAndConditionsPage() {
 
               {/* Account & Wallet Funding */}
               <div>
-                <h4 className="font-semibold text-white mb-2">2.4 Account &amp; Wallet Funding</h4>
+                <h4 className="font-semibold text-foreground mb-2">2.4 Account &amp; Wallet Funding</h4>
                 <ul className="list-disc list-inside space-y-2 ml-2">
                   <li>
                     Players can fund their Buzzycash wallet through Mobile Money (MoMo) integrations displayed within
@@ -115,7 +123,7 @@ export default function TermsAndConditionsPage() {
 
               {/* Game Play & Results */}
               <div>
-                <h4 className="font-semibold text-white mb-2">2.5 Game Play &amp; Results</h4>
+                <h4 className="font-semibold text-foreground mb-2">2.5 Game Play &amp; Results</h4>
                 <ul className="list-disc list-inside space-y-2 ml-2">
                   <li>Every game is chance-based. Outcomes are randomly generated and final</li>
                   <li>Buzzycash Ghana maintains transparency and fairness in all draws</li>
@@ -125,7 +133,7 @@ export default function TermsAndConditionsPage() {
 
               {/* Payouts */}
               <div>
-                <h4 className="font-semibold text-white mb-2">2.6 Payouts</h4>
+                <h4 className="font-semibold text-foreground mb-2">2.6 Payouts</h4>
                 <ul className="list-disc list-inside space-y-2 ml-2">
                   <li>Cash prizes are processed automatically via MoMo</li>
                   <li>
@@ -137,7 +145,7 @@ export default function TermsAndConditionsPage() {
 
               {/* Responsible Gaming */}
               <div>
-                <h4 className="font-semibold text-white mb-2">2.7 Responsible Gaming</h4>
+                <h4 className="font-semibold text-foreground mb-2">2.7 Responsible Gaming</h4>
                 <ul className="list-disc list-inside space-y-2 ml-2">
                   <li>Play responsibly. We encourage moderation and fun</li>
                   <li>If you suspect gaming addiction, contact our support team for assistance</li>
@@ -146,7 +154,7 @@ export default function TermsAndConditionsPage() {
 
               {/* Amendments */}
               <div>
-                <h4 className="font-semibold text-white mb-2">2.8 Amendments</h4>
+                <h4 className="font-semibold text-foreground mb-2">2.8 Amendments</h4>
                 <p>
                   Buzzycash Ghana reserves the right to amend these Terms at any time. Updated versions take effect
                   immediately upon publication.
@@ -155,7 +163,7 @@ export default function TermsAndConditionsPage() {
 
               {/* Governing Law */}
               <div>
-                <h4 className="font-semibold text-white mb-2">2.9 Governing Law</h4>
+                <h4 className="font-semibold text-foreground mb-2">2.9 Governing Law</h4>
                 <p>
                   These Terms are governed by the laws of the Republic of Ghana and subject to the jurisdiction of
                   Ghanaian courts.
@@ -166,7 +174,7 @@ export default function TermsAndConditionsPage() {
 
           {/* Game Rules */}
           <AccordionItem value="game-rules">
-            <AccordionTrigger className="text-lg font-semibold text-white hover:text-amber-400">
+            <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary">
               III. Game Rules
             </AccordionTrigger>
             <AccordionContent className="text-slate-300 space-y-6">
@@ -321,19 +329,19 @@ export default function TermsAndConditionsPage() {
 
           {/* Privacy Policy */}
           <AccordionItem value="privacy-policy">
-            <AccordionTrigger className="text-lg font-semibold text-white hover:text-amber-400">
+            <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary">
               IV. Privacy Policy
             </AccordionTrigger>
             <AccordionContent className="text-slate-300 space-y-6">
               <div>
-                <h4 className="font-semibold text-white mb-2">4.1 Information Collected</h4>
+                <h4 className="font-semibold text-foreground mb-2">4.1 Information Collected</h4>
                 <p>
                   Buzzycash Ghana collects minimal information: mobile number, transaction records, and game activity.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-semibold text-white mb-2">4.2 Purpose of Data Collection</h4>
+                <h4 className="font-semibold text-foreground mb-2">4.2 Purpose of Data Collection</h4>
                 <ul className="list-disc list-inside space-y-2 ml-2">
                   <li>To enable gameplay via *245#</li>
                   <li>To process winnings through MoMo</li>
@@ -343,7 +351,7 @@ export default function TermsAndConditionsPage() {
               </div>
 
               <div>
-                <h4 className="font-semibold text-white mb-2">4.3 Data Security</h4>
+                <h4 className="font-semibold text-foreground mb-2">4.3 Data Security</h4>
                 <p>
                   All user data is stored securely and never shared with third parties except regulatory authorities
                   when legally required.
@@ -351,7 +359,7 @@ export default function TermsAndConditionsPage() {
               </div>
 
               <div>
-                <h4 className="font-semibold text-white mb-2">4.4 User Rights</h4>
+                <h4 className="font-semibold text-foreground mb-2">4.4 User Rights</h4>
                 <p>Players may request correction or deletion of their personal data at any time.</p>
               </div>
             </AccordionContent>
@@ -359,7 +367,7 @@ export default function TermsAndConditionsPage() {
 
           {/* Updates & Changes */}
           <AccordionItem value="updates">
-            <AccordionTrigger className="text-lg font-semibold text-white hover:text-amber-400">
+            <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary">
               V. Updates &amp; Changes to Terms
             </AccordionTrigger>
             <AccordionContent className="text-slate-300">
@@ -391,6 +399,8 @@ export default function TermsAndConditionsPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-slate-500 text-sm">
         <p>Last Updated: November 2024</p>
       </div>
-    </main>
+      </main>
+      <Footer />
+    </div>
   )
 }

@@ -78,9 +78,9 @@ export function MonthlyJackpot() {
   ]
 
   const operators = [
-    { id: "mtn", name: "MTN", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/MTN_Logo.svg/200px-MTN_Logo.svg.png" },
-    { id: "vodafone", name: "Vodafone", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Vodafone_icon.svg/200px-Vodafone_icon.svg.png" },
-    { id: "airteltigo", name: "AirtelTigo", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/AirtelTigo_logo.svg/200px-AirtelTigo_logo.svg.png" }
+    { id: "mtn", name: "MTN", logo: "momo.jpg" },
+    { id: "Telecel", name: "Telecel", logo: "telecel.jpg" },
+    { id: "AirtelTigo", name: "AirtelTigo", logo: "airteltigo.jpg" }
   ]
 
   useEffect(() => {
