@@ -128,8 +128,8 @@ export function MonthlyJackpot() {
     <>
       <section className="py-20 px-4 bg-gradient-to-b from-background to-card/30">
         <div className="container mx-auto max-w-4xl">
-          <h2 className="text-4xl md:text-5xl font-bold text-center text-foreground mb-12">
-            Participate in Monthly Jackpot
+          <h2 className="text-3xl md:text-5xl font-bold text-center text-foreground mb-12">
+            Participate in Monthly Jackpot By Playing Any Game
           </h2>
 
           <div className="bg-card/80 backdrop-blur-sm border-2 border-border rounded-3xl p-8 md:p-12 shadow-2xl">
@@ -221,7 +221,7 @@ export function MonthlyJackpot() {
                 <div
                   key={game.id}
                   onClick={() => handlePlayGame(game)}
-                  className="group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.05] w-full md:w-90 hover:shadow-xl border-4 border-yellow-500 md:border-transparent md:hover:border-yellow-500"
+                  className="group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.05] w-full md:w-80 hover:shadow-xl border-4 border-yellow-500 md:border-transparent md:hover:border-yellow-500"
                 >
                   {/* Full Promotional Image */}
                   <div className="relative aspect-[3/4]">

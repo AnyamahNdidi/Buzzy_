@@ -99,7 +99,7 @@ export function SelectGame() {
               <div
                 key={game.id}
                 onClick={() => handlePlayGame(game)}
-                className="group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.05] w-full md:w-90 hover:shadow-xl border-4 border-yellow-500 md:border-transparent md:hover:border-yellow-500"
+                className="group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.05] w-full md:w-80 hover:shadow-xl border-4 border-yellow-500 md:border-transparent md:hover:border-yellow-500"
               >
                 {/* Full Promotional Image */}
                 <div className="relative aspect-[3/4]">

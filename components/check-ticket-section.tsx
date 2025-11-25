@@ -163,7 +163,7 @@ export function CheckTicketSection() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
                 <Input
                   type="tel"
-                  placeholder="e.g. 08012345678"
+                  placeholder="e.g. 0244 123 4567"
                   value={phoneNumber}
                   onChange={(e) => {
                     // Allow only numbers
