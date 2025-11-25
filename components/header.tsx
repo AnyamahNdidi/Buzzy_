@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Game History', href: '/game-history', current: false },
   { name: 'Winners', href: '#', current: false },
   { name: 'How It Works', href: '#', current: false },
+  { name: 'Terms', href: '/terms-and-conditions', current: false },
 ]
 
 export function Header() {
