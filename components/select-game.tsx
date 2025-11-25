@@ -35,20 +35,20 @@ export function SelectGame() {
       instruction: "PLAY TROTRO NOW on",
       specialNote: "BUS STOP"
     },
-    {
-      id: 3,
-      name: "Goldmine",
-      shortCode: "*245#",
-      color: "from-amber-600 to-yellow-700",
-      image: "3.jpeg",
-      tagline: "EVERY DIG COULD BE",
-      subtitle: "YOUR BIG JACKPOT",
-      description: "Get yourself locked up in this exciting game to win lots of cash. Be a part of this new trend in gaming.",
-      instruction: "PLAY GOLDMINE NOW on"
-    },
+    // {
+    //   id: 3,
+    //   name: "Goldmine",
+    //   shortCode: "*245#",
+    //   color: "from-amber-600 to-yellow-700",
+    //   image: "3.jpeg",
+    //   tagline: "EVERY DIG COULD BE",
+    //   subtitle: "YOUR BIG JACKPOT",
+    //   description: "Get yourself locked up in this exciting game to win lots of cash. Be a part of this new trend in gaming.",
+    //   instruction: "PLAY GOLDMINE NOW on"
+    // },
     {
       id: 4,
-      name: "BuzzyCash",
+      name: "Goldmine",
       shortCode: "*245#",
       color: "from-purple-500 to-pink-600",
       image: "4.jpeg",
