@@ -71,12 +71,12 @@ export function HeroSection() {
         </motion.div>
 
         <motion.h1 
-          className="text-3xl md:text-6xl lg:text-7xl font-bold text-center mb-12 md:mb-16"
+          className="text-4xl md:text-6xl lg:text-7xl font-bold text-center mb-12 md:mb-16 max-w-4xl mx-auto"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          <span className="text-white whitespace-nowrap">Play more and win more with <span className="bg-gradient-to-r from-[#F97716] from-23% to-[#FAB515] to-83% text-transparent bg-clip-text">buzzycash</span></span>
+          <span className="text-white">Play & win with <span className="bg-gradient-to-r from-[#F97716] from-23% to-[#FAB515] to-83% text-transparent bg-clip-text">buzzycash</span></span>
         </motion.h1>
 
         {/* Mobile Layout */}
