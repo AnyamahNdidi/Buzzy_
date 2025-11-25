@@ -21,14 +21,15 @@ export default function Page() {
         <Header />
         <main>
           <HeroSection />
-          <RecentWinners />
+          <MonthlyJackpot />
+          {/* <RecentWinners /> */}
           {/* <TrendingLotteries /> */}
           <SelectGame />
-          <MonthlyJackpot />
-          <NumberPicker />
-          <SuccessStories />
+          
+          {/* <NumberPicker /> */}
+          {/* <SuccessStories /> */}
           <Champions />
-          <WaysToPlay />
+          {/* <WaysToPlay /> */}
           {/* <Newsletter /> */}
            <FAQSection/>
         </main>

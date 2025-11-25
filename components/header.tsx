@@ -44,9 +44,9 @@ export function Header() {
             <Button variant="ghost" className="hidden md:inline-flex text-foreground">
               Sign In
             </Button>
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+            {/* <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
               Join Now
-            </Button>
+            </Button> */}
             <Button 
               variant="ghost" 
               size="icon" 

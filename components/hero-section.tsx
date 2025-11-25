@@ -1,4 +1,3 @@
-
 "use client"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -6,10 +5,10 @@ import { Rocket, ArrowRight } from "lucide-react"
 
 export function HeroSection() {
   return (
-    <section className="relative py-20 md:py-32 overflow-hidden">
-      {/* Lottery balls background image */}
+    <section className="relative py-10 pb-0 md:py-20  overflow-hidden">
+      {/* Lottery balls background image - Desktop only */}
       <div 
-        className="absolute top-0 right-0 w-1/2 h-full pointer-events-none opacity-60"
+        className="hidden md:block absolute top-0 right-0 w-1/2 h-full pointer-events-none opacity-60"
         style={{
           backgroundImage: "url('/lottery-balls-bg.png')",
           backgroundPosition: "top right",
@@ -19,7 +18,7 @@ export function HeroSection() {
       />
       
       {/* Gradient overlay to blend the image */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-transparent via-transparent to-gray-900/90 pointer-events-none" />
+      <div className="hidden md:block absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-transparent via-transparent to-gray-900/90 pointer-events-none" />
 
       {/* Floating gradient orbs with Framer Motion */}
       <motion.div 
@@ -67,22 +66,135 @@ export function HeroSection() {
           transition={{ duration: 0.7 }}
         >
           <div className="bg-[#FDB400] text-black px-6 py-2 rounded-lg font-bold text-sm md:text-base">
-            Secure, Trusted, And Fast Lottery Experience.
+            Trusted instant and fastest payout
           </div>
         </motion.div>
 
         <motion.h1 
-          className="text-4xl md:text-6xl lg:text-7xl font-bold text-center mb-16"
+          className="text-3xl md:text-6xl lg:text-7xl font-bold text-center mb-12 md:mb-16"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          <span className="text-white">Win Big With <span className="bg-gradient-to-r from-[#F97716] from-23% to-[#FAB515] to-83% text-transparent bg-clip-text">BuzzyCash</span></span>
-          <br />
-          <span className="text-cyan-400">Winning</span> <span className="text-white">Daily</span>
+          <span className="text-white">Win more and win more with <span className="bg-gradient-to-r from-[#F97716] from-23% to-[#FAB515] to-83% text-transparent bg-clip-text">buzzy cash</span></span>
         </motion.h1>
 
-        <div className="grid lg:grid-cols-3 gap-8 items-center max-w-7xl mx-auto">
+        {/* Mobile Layout */}
+        <div className="flex flex-col items-center space-y-8 md:hidden pb-10 relative">
+          {/* Join Lottery Button - Moved to top */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
+            className="z-10"
+          >
+            <Button
+              size="lg"
+              className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 font-semibold px-8 py-6 rounded-full text-lg group"
+            >
+              Play Now
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </motion.div>
+
+          {/* Total Players Circle */}
+          {/* <motion.div 
+            className="flex flex-col items-center mt-4"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.5 }}
+          >
+            <motion.div 
+              className="w-48 h-48 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex flex-col items-center justify-center shadow-2xl shadow-cyan-500/50 border-4 border-white"
+              animate={{ 
+                rotate: [0, 5, -5, 5, 0],
+                scale: [1, 1.05, 1, 1.03, 1]
+              }}
+              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+              whileHover={{ scale: 1.05 }}
+            >
+              <div className="text-5xl font-bold text-white mb-1">🚀</div>
+              <div className="text-4xl font-bold text-white">15M +</div>
+              <div className="text-sm font-semibold text-white">Total Players</div>
+            </motion.div>
+          </motion.div> */}
+
+          {/* Description Text */}
+          <motion.p 
+            className="hidden md:block text-white text-center max-w-sm text-base px-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.6 }}
+          >
+            Join 5M+ Members In Thrilling, Secure, And Rewarding Lottery Gaming.
+          </motion.p>
+
+          {/* Avatar Group */}
+          <motion.div 
+            className="flex items-center justify-center"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.7 }}
+          >
+            <div className="flex -space-x-3">
+              <div className="w-10 h-10 rounded-full border-2 border-gray-900 bg-blue-500 flex items-center justify-center text-white font-bold">J</div>
+              <div className="w-10 h-10 rounded-full border-2 border-gray-900 bg-green-500 flex items-center justify-center text-white font-bold">K</div>
+              <div className="w-10 h-10 rounded-full border-2 border-gray-900 bg-purple-500 flex items-center justify-center text-white font-bold">A</div>
+              <div className="w-10 h-10 rounded-full border-2 border-gray-900 bg-pink-500 flex items-center justify-center text-white font-bold">M</div>
+              <div className="w-10 h-10 rounded-full border-2 border-gray-900 bg-[#FDB400] flex items-center justify-center text-gray-900 font-bold">25+</div>
+            </div>
+          </motion.div>
+
+          {/* Welcome Text */}
+          <motion.p 
+            className="text-white text-center text-2xl max-w-sm  px-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.8 }}
+          >
+           Where every ticket is a chance to change your life win more
+          </motion.p>
+
+          {/* Stats */}
+          {/* <motion.div 
+            className="flex gap-12 mt-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.9 }}
+          >
+            <div className="text-center">
+              <div className="text-3xl font-bold bg-gradient-to-r from-[#F97716] to-[#FAB515] text-transparent bg-clip-text">15M +</div>
+              <div className="text-sm text-gray-400 mt-1">Total Winners</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold bg-gradient-to-r from-[#F97716] to-[#FAB515] text-transparent bg-clip-text">5.2K +</div>
+              <div className="text-sm text-gray-400 mt-1">Total Payouts</div>
+            </div>
+          </motion.div> */}
+        </div>
+
+          {/* Winner Image - Mobile - Positioned at bottom as semi-circle */}
+          <motion.div 
+            className="w-full mt-4 md:hidden"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 1 }}
+          >
+            <div className="relative w-full max-w-md mx-auto">
+              <div className="w-full h-50 rounded-t-full bg-gradient-to-b from-[#FDB400] to-[#F97716] overflow-hidden shadow-2xl">
+                <img
+                  src="/backgroungI.png"
+                  alt="Winner celebrating"
+                  className="w-full h-full object-cover object-top scale-110"
+                />
+              </div>
+            </div>
+          </motion.div>
+
+        {/* Desktop Layout - Original Grid */}
+        <div className="hidden md:grid lg:grid-cols-3 gap-8 items-center max-w-7xl mx-auto">
           {/* Left: Circular player count badge */}
           <motion.div 
             className="flex flex-col items-center lg:items-start"
@@ -92,21 +204,21 @@ export function HeroSection() {
           >
             <div className="relative">
               <motion.div 
-                className="w-48 h-48 md:w-64 md:h-64 rounded-full bg-cyan-400 flex flex-col items-center justify-center shadow-2xl shadow-cyan-400/50"
+                className="w-48 h-48 md:w-64 md:h-64 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex flex-col items-center justify-center shadow-2xl shadow-orange-500/50 border-4 border-white"
                 animate={{ 
-                  x: [0, 15, 0, -15, 0],
-                  y: [0, -10, 0, 10, 0]
+                  rotate: [0, 5, -5, 5, 0],
+                  scale: [1, 1.05, 1, 1.03, 1]
                 }}
-                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
                 whileHover={{ scale: 1.05 }}
               >
-                <Rocket className="w-12 h-12 md:w-16 md:h-16 text-gray-900 mb-2" />
-                <div className="text-4xl md:text-5xl font-bold text-gray-900">15M+</div>
-                <div className="text-sm md:text-base font-semibold text-gray-900">Total Players</div>
+                <div className="text-6xl md:text-7xl font-bold text-white mb-2">🎯</div>
+                <div className="text-2xl md:text-3xl font-bold text-white text-center px-2">Monthly Draw</div>
+                <div className="text-sm font-semibold text-white text-center px-4 mt-2">Every play enters you into our grand monthly draw</div>
               </motion.div>
             </div>
             <p className="text-white text-center lg:text-left mt-6 max-w-xs text-sm md:text-base">
-              Join 5M+ Members In Thrilling, Secure, And Rewarding Lottery Gaming.
+              Every play enters a draw for the month
             </p>
           </motion.div>
 
@@ -194,7 +306,7 @@ export function HeroSection() {
             transition={{ duration: 0.7, delay: 0.6 }}
           >
             <p className="text-white text-center lg:text-right max-w-xs text-sm md:text-base">
-              Welcome To The Ultimate Lottery Experience, Where Every Ticket Is A Chance To Change Your Life.
+              Where every ticket is a chance to change your life win more.
             </p>
             <motion.div
               whileHover={{ scale: 1.05 }}
@@ -208,34 +320,12 @@ export function HeroSection() {
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </motion.div>
-
-            {/* Stats */}
-            <div className="flex gap-8">
-              <motion.div 
-                className="text-center"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-              >
-                <div className="text-3xl md:text-4xl font-bold text-white">15M+</div>
-                <div className="text-sm text-gray-400">Total Winners</div>
-              </motion.div>
-              <motion.div 
-                className="text-center"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.9 }}
-              >
-                <div className="text-3xl md:text-4xl font-bold text-white">5.2K+</div>
-                <div className="text-sm text-gray-400">Total Payouts</div>
-              </motion.div>
-            </div>
           </motion.div>
         </div>
       </div>
 
       {/* Scroll indicator */}
-      <motion.div 
+      {/* <motion.div 
         className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
         animate={{ y: [0, 10, 0] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
@@ -243,7 +333,7 @@ export function HeroSection() {
         <div className="w-12 h-12 rounded-full bg-[#FDB400] flex items-center justify-center">
           <ArrowRight className="w-6 h-6 text-gray-900 rotate-90" />
         </div>
-      </motion.div>
+      </motion.div> */}
     </section>
   )
 }
