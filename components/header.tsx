@@ -6,8 +6,8 @@ import { Trophy, Menu, X } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 const navigation = [
-  { name: 'Home', href: '#', current: true },
-  { name: 'Lotteries', href: '#', current: false },
+  { name: 'Home', href: '/', current: true },
+  { name: 'Game History', href: '/game-history', current: false },
   { name: 'Winners', href: '#', current: false },
   { name: 'How It Works', href: '#', current: false },
 ]

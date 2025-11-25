@@ -12,6 +12,7 @@ import { Newsletter } from "@/components/newsletter"
 import { Footer } from "@/components/footer"
 import { LotteryBallsBackground } from "@/components/lottery-balls-background"
 import { FAQSection } from "@/components/faq-sections"
+import { CheckTicketSection } from "@/components/check-ticket-section"
 
 export default function Page() {
   return (
@@ -28,7 +29,9 @@ export default function Page() {
           
           {/* <NumberPicker /> */}
           {/* <SuccessStories /> */}
+          <CheckTicketSection/>
           <Champions />
+
           {/* <WaysToPlay /> */}
           {/* <Newsletter /> */}
            <FAQSection/>
