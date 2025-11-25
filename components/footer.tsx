@@ -1,4 +1,4 @@
-import { Trophy, Facebook, Twitter, Instagram, Youtube } from "lucide-react"
+import { Trophy, Twitter, Instagram, Youtube, MessageSquare } from "lucide-react"
 
 export function Footer() {
   return (
@@ -17,25 +17,25 @@ export function Footer() {
             </p>
             <div className="flex gap-3">
               <a
-                href="#"
+                href="https://www.tiktok.com/@buzzycashgh?is_from_webapp=1&sender_device=pc"
                 className="w-9 h-9 bg-secondary rounded-lg flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
               >
-                <Facebook className="w-4 h-4" />
+                <MessageSquare className="w-4 h-4" />
               </a>
               <a
-                href="#"
+                href="https://x.com/Buzzycashgh?t=tBSE1Ex2a_U_SW1oHCGAXA&s=09"
                 className="w-9 h-9 bg-secondary rounded-lg flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
               >
                 <Twitter className="w-4 h-4" />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/buzzycashgh?igsh=MXA5eTBzZ2l5NzE0Yw=="
                 className="w-9 h-9 bg-secondary rounded-lg flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
               >
                 <Instagram className="w-4 h-4" />
               </a>
               <a
-                href="#"
+                href="http://www.youtube.com/@BuzzycashGH"
                 className="w-9 h-9 bg-secondary rounded-lg flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
               >
                 <Youtube className="w-4 h-4" />

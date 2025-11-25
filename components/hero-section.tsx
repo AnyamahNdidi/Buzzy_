@@ -76,7 +76,7 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          <span className="text-white">Win more and win more with <span className="bg-gradient-to-r from-[#F97716] from-23% to-[#FAB515] to-83% text-transparent bg-clip-text">buzzy cash</span></span>
+          <span className="text-white whitespace-nowrap">Play more and win more with <span className="bg-gradient-to-r from-[#F97716] from-23% to-[#FAB515] to-83% text-transparent bg-clip-text">buzzycash</span></span>
         </motion.h1>
 
         {/* Mobile Layout */}
