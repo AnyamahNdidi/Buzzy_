@@ -39,7 +39,7 @@ export function SelectGame() {
     },
     {
       id: 4,
-      name: "Goldmine",
+      name: "Gold Mine",
       shortCode: "*245#",
       color: "from-purple-500 to-pink-600",
       image: "4.jpeg",
