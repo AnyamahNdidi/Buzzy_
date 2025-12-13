@@ -301,14 +301,14 @@ export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator 
   const handleInputSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (currentStep === 2) {
+    if ((currentStep === 2 && game.name !== 'Trotro') || (currentStep === 3 && game.name === 'Trotro')) {
       const amountNum = parseInt(inputValue);
       if (isNaN(amountNum) || amountNum < 1 || amountNum > 1000) {
         alert('Please enter a valid amount between 1 and 1000 GHS');
         return;
       }
       setAmount(inputValue);
-      setCurrentStep(3);
+      setCurrentStep(game.name === 'Trotro' ? 4 : 3);
     } 
     else if (currentStep === 4 && game.name === 'Ghana Jollof' && pin) {
       if (pin.length !== 4 || !/^\d+$/.test(pin)) {
