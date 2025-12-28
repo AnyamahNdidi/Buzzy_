@@ -30,7 +30,7 @@ export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
 
   return (
-    <section className="relative py-20 md:py-32 bg-gray-900 overflow-hidden">
+    <section className="relative py-20 md:py-10 bg-gray-900 overflow-hidden">
       {/* Background gradient orbs */}
       <motion.div 
         className="absolute left-0 top-20 w-48 h-48 rounded-full bg-gradient-to-br from-purple-400/20 via-pink-400/20 to-cyan-400/20 blur-3xl"

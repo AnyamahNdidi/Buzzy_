@@ -1,5 +1,5 @@
 import { Header } from "@/components/header"
-import { HeroSection } from "@/components/hero-section"
+import  {HeroSection }from "@/components/hero-section"
 import { RecentWinners } from "@/components/recent-winners"
 import { TrendingLotteries } from "@/components/trending-lotteries"
 import { SelectGame } from "@/components/select-game"
@@ -13,6 +13,7 @@ import { Footer } from "@/components/footer"
 import { LotteryBallsBackground } from "@/components/lottery-balls-background"
 import { FAQSection } from "@/components/faq-sections"
 import { CheckTicketSection } from "@/components/check-ticket-section"
+import { VideoGuide } from "@/components/video-guide"
 
 export default function Page() {
   return (
@@ -30,7 +31,8 @@ export default function Page() {
           {/* <NumberPicker /> */}
           {/* <SuccessStories /> */}
           <CheckTicketSection/>
-          <Champions />
+          {/* <Champions /> */}
+          <VideoGuide/>
 
           {/* <WaysToPlay /> */}
           {/* <Newsletter /> */}

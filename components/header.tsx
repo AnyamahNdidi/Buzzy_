@@ -9,7 +9,7 @@ const navigation = [
   { name: 'Home', href: '/', current: true },
   { name: 'Game History', href: '/game-history', current: false },
   { name: 'Winners', href: '#', current: false },
-  { name: 'How It Works', href: '#', current: false },
+  { name: 'How To Play', href: '/how-to-play', current: false },
   { name: 'Terms', href: '/terms-and-conditions', current: false },
 ]
 

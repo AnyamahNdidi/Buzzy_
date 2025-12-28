@@ -126,7 +126,7 @@ export function MonthlyJackpot() {
 
   return (
     <>
-      <section className="py-20 px-4 bg-gradient-to-b from-background to-card/30">
+      <section className="pb-20 pt-0 px-4 bg-gradient-to-b from-background to-card/30">
         <div className="container mx-auto max-w-4xl">
           <h2 className="text-3xl md:text-5xl font-bold text-center text-foreground mb-12">
             Participate in Monthly Jackpot By Playing Any Game
