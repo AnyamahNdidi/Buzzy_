@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { X, Play } from "lucide-react"
 import { USSDGameFlow } from "./ussd-game-flow"
-
+import { useStartPlayingMutation } from '@/lib/redux/api/ghanaJollofApi';
 export function SelectGame() {
   const [showPlayModal, setShowPlayModal] = useState(false)
   const [showGameFlow, setShowGameFlow] = useState(false)
@@ -12,6 +12,9 @@ export function SelectGame() {
   const [phoneNumber, setPhoneNumber] = useState("")
   const [amount, setAmount] = useState("")
   const [selectedOperator, setSelectedOperator] = useState("")
+
+   const [startPlaying, { isLoading }] = useStartPlayingMutation();
+  
 
   const games = [
     {
@@ -52,23 +55,60 @@ export function SelectGame() {
 
   const operators = [
     { id: "mtn", name: "MTN", logo: "momo.jpg" },
-    { id: "Telecel", name: "Telecel", logo: "telecel.jpg" },
-    { id: "AirtelTigo", name: "AirtelTigo", logo: "airteltigo.jpg" }
+    { id: "VOD", name: "VODAFONE", logo: "telecel.jpg" },
+    { id: "AIR", name: "AIRTELTIGO", logo: "airteltigo.jpg" }
   ]
 
   const handlePlayGame = (game: any) => {
     setSelectedGame(game)
-    setShowPlayModal(true)
+      try {
+    // For Ghana Jollof game, we'll use the API
+    if (game.name === "Ghana Jollof") {
+      setShowPlayModal(true);
+      return;
+    }
+    
+    // For other games, show the USSD flow
+    setShowGameFlow(true);
+  } catch (error) {
+    console.error('Error starting game:', error);
+    // Handle error (e.g., show error message to user)
+  }
   }
 
-  const handleStartGame = () => {
-    if (!phoneNumber || !selectedOperator) {
-      alert('Please enter your phone number and select a mobile operator')
-      return
-    }
-    setShowPlayModal(false)
-    setShowGameFlow(true)
+ // Update the handleStartGame function
+const handleStartGame = async () => {
+  if (!phoneNumber || !selectedOperator) {
+    alert('Please enter your phone number and select a mobile operator');
+    return;
   }
+
+  try {
+    if (selectedGame?.name === "Ghana Jollof") {
+      // Call the startPlaying mutation
+      const result = await startPlaying({
+        game_name: "WEBJOLLOF", // Match the expected API value
+        phone_number: phoneNumber.replace(/\D/g, ''), // Remove any non-numeric characters
+        network: selectedOperator.toUpperCase() // Ensure uppercase to match API expectations
+      }).unwrap();
+
+      // The response will be handled by the transformResponse in the API slice
+      // You can access the response data here if needed
+      console.log('Game started:', result);
+      
+      // Close the modal and show success or navigate to game
+      setShowPlayModal(false);
+      // Optionally show success message or navigate to game screen
+    } else {
+      // Handle other games
+      setShowPlayModal(false);
+      setShowGameFlow(true);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    // Handle error (e.g., show error message to user)
+  }
+};
 
   return (
     <>

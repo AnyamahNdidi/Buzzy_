@@ -84,7 +84,24 @@ export function MonthlyJackpot() {
   ]
 
   useEffect(() => {
-    const targetDate = new Date('2025-12-20T00:00:00').getTime()
+    const getNext20th = () => {
+      const now = new Date();
+      let year = now.getFullYear();
+      let month = now.getMonth();
+      
+      // If today's date is past the 20th, target next month's 20th
+      if (now.getDate() >= 20) {
+        month += 1;
+        if (month > 11) { // If December, move to January next year
+          month = 0;
+          year += 1;
+        }
+      }
+      
+      return new Date(year, month, 20).getTime();
+    };
+    
+    const targetDate = getNext20th();
 
     const updateCountdown = () => {
       const now = new Date().getTime()
