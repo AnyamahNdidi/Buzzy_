@@ -193,22 +193,38 @@ const secureStorage = {
 };
 
 // Base query configuration
+// const baseQuery = fetchBaseQuery({
+//   baseUrl: API_BASE_URL,
+//   prepareHeaders: (headers, { getState, endpoint }) => {
+//     // Always include these basic headers
+//     headers.set('Content-Type', 'application/json');
+//     headers.set('X-Requested-With', 'XMLHttpRequest');
+    
+//     // For startPlaying endpoint, we don't want to include X-Session-ID
+//     if (endpoint === 'startPlaying') {
+//       return headers;
+//     }
+    
+//     // For all other endpoints, include X-Session-ID
+//     const sessionId = secureStorage.getSession('session_id');
+//     if (sessionId) {
+//       // Convert to string and trim any whitespace
+//       const cleanSessionId = String(sessionId).trim();
+//       if (cleanSessionId) {
+//         headers.set('X-Session-ID', cleanSessionId);
+//       }
+//     }
+    
+//     return headers;
+//   },
+// });
+
 const baseQuery = fetchBaseQuery({
   baseUrl: API_BASE_URL,
-  prepareHeaders: (headers, { getState, endpoint }) => {
-    const headerObj = getHeaders(endpoint !== 'startPlaying');
-    Object.entries(headerObj).forEach(([key, value]) => {
-      headers.set(key, value);
-    });
-    
-    // For mission endpoints, we might need session_id from storage
-    if (endpoint === 'startMission' || endpoint === 'jollofAmountWeb' || endpoint === 'jollofPayment') {
-      const sessionId = secureStorage.getSession('session_id');
-      if (sessionId) {
-        headers.set('X-Session-ID', sessionId);
-      }
-    }
-    
+  prepareHeaders: (headers) => {
+    // Only include these basic headers
+    headers.set('Content-Type', 'application/json');
+    headers.set('X-Requested-With', 'XMLHttpRequest');
     return headers;
   },
 });
