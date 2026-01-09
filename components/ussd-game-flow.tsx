@@ -2,7 +2,7 @@
 
 'use client'
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from "@/components/ui/button"
 import { X, ArrowRight } from "lucide-react"
 import { useStartMissionMutation } from '@/lib/redux/api/ghanaJollofApi';
@@ -32,6 +32,21 @@ export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator 
     multiplier: 1
   });
 
+  const ingredientOptions = useMemo(() => {
+  try {
+    if (game.name === 'Ghana Jollof') {
+      const storedOptions = secureStorage.getSession('ingredient_options');
+      return storedOptions ? JSON.parse(storedOptions) : [];
+    }
+    return [];
+  } catch (e) {
+    console.error('Error parsing ingredient options:', e);
+    return [];
+  }
+}, [game.name]);
+
+console.log("oh boy",ingredientOptions)
+
   // Game specific data
   const gameFlows = {
     'Ghana Jollof': {
@@ -47,11 +62,12 @@ export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator 
         {
           title: 'PICK ONE OPTION',
           message: 'Pick one option with the secret ingredient',
-          options: [
-            { text: 'Garlic paste, spring onions', value: 1 },
-            { text: 'Cabbage, Tomato Paste', value: 2 },
-            { text: 'Goat stock, stock cubes, Pepper mix', value: 3 }
-          ]
+         options: ingredientOptions.length > 0 
+        ? ingredientOptions 
+        : [
+            { text: 'Loading ingredients...', value: 0, disabled: true }
+          ],
+      isDynamic: true
         },
         {
           title: 'CHOOSE AMOUNT',
@@ -512,7 +528,7 @@ export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator 
           </form>
         ) : (
           <div className="space-y-2">
-            {step.options?.map((option) => (
+            {step.options?.map((option:any) => (
               <Button
                 key={option.value}
                 variant="outline"

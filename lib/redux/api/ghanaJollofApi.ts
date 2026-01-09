@@ -295,20 +295,42 @@ export const ghanaJollofGameApi = createApi({
      * }
      */
     startMission: builder.mutation<StartMissionResponse, StartMissionRequest>({
-      query: (missionData) => ({
-        url: '/connect/start_mission/',
-        method: 'POST',
-        body: missionData,
-      }),
-      transformResponse: (response: StartMissionResponse) => {
-        // Store mission data if needed
-        if (typeof window !== 'undefined' && response.mission_id) {
-          secureStorage.setSession('mission_id', response.mission_id);
-        }
-        return response;
-      },
-      invalidatesTags: ['Mission', 'GameSession'],
-    }),
+  query: (missionData) => ({
+    url: '/connect/start_mission/',
+    method: 'POST',
+    body: missionData,
+  }),
+  transformResponse: (response: any) => {
+    if (typeof window !== 'undefined') {
+      // Store mission data
+      if (response.mission_id) {
+        secureStorage.setSession('mission_id', response.mission_id);
+      }
+      
+      // Store ingredient options for the next step
+      if (response.ingredient) {
+        // Convert the ingredient object to an array of options
+        const ingredientOptions = Object.entries(response.ingredient)
+          .filter(([key]) => !isNaN(Number(key))) // Only get numeric keys (1, 2, 3)
+          .map(([key, value]) => ({
+            value: Number(key),
+            text: value as string
+          }));
+        
+        // Store in secure storage
+        secureStorage.setSession('ingredient_options', JSON.stringify(ingredientOptions));
+      }
+      
+      // Store other response data that might be needed for jollofAmountWeb
+      secureStorage.setSession('current_number', response.number);
+      secureStorage.setSession('current_game_name', response.game_name);
+      secureStorage.setSession('current_network', response.network);
+      secureStorage.setSession('current_session_id', response.session);
+    }
+    return response;
+  },
+  invalidatesTags: ['Mission', 'GameSession'],
+}),
 
     // ==================== JOLLOF AMOUNT WEB ====================
     /**
