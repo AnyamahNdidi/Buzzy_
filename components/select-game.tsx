@@ -98,6 +98,7 @@ const handleStartGame = async () => {
       
       // Close the modal and show success or navigate to game
       setShowPlayModal(false);
+      setShowGameFlow(true);
       // Optionally show success message or navigate to game screen
     } else {
       // Handle other games

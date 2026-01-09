@@ -5,6 +5,8 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button"
 import { X, ArrowRight } from "lucide-react"
+import { useStartMissionMutation } from '@/lib/redux/api/ghanaJollofApi';
+import { secureStorage } from '@/lib/redux/api/ghanaJollofApi';
 
 interface USSDGameFlowProps {
   game: any;
@@ -15,7 +17,9 @@ interface USSDGameFlowProps {
 }
 
 export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator }: USSDGameFlowProps) {
+   const [startMission] = useStartMissionMutation();
   const [currentStep, setCurrentStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [amount, setAmount] = useState('');
@@ -223,34 +227,59 @@ export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator 
     }
   };
 
-  const handleGhanaJollof = (option: number) => {
-    if (currentStep === 0) {
-      if (option === 1) {
-        setCurrentStep(1);
-      } else {
-        onClose();
+ const handleGhanaJollof = async (option: number) => {
+  if (currentStep === 0) {
+    if (option === 1) {
+      // Get the stored session data
+      const sessionId = secureStorage.getSession('session_id');
+      const gameNumber = secureStorage.getSession('game_number');
+      const network = secureStorage.getSession('game_network');
+      const gameName = secureStorage.getSession('game_name');
+
+      if (!sessionId || !gameNumber || !network || !gameName) {
+        // Handle missing session data
+        console.error('Missing session data');
+        return;
       }
-    } else if (currentStep === 1) {
-      if (option === 1) {
-        setCurrentStep(2);
-      } else {
-        setGameResult({
-          won: false,
-          message: 'Wrong ingredient! Try again.'
-        });
-        setCurrentStep(5);
+
+      try {
+        setIsProcessing(true);
+        
+        // Call the startMission API
+        const result = await startMission({
+          mission: true,
+          number: gameNumber,
+          network: network,
+          game_name: gameName,
+          session_id: sessionId
+        }).unwrap();
+
+        console.log('Mission started:', result);
+        setCurrentStep(1); // Move to next step after successful mission start
+      } catch (error) {
+        console.error('Error starting mission:', error);
+        // Handle error (show error message to user)
+      } finally {
+        setIsProcessing(false);
       }
-    } else if (currentStep === 3) {
-      if (option === 1) {
-        setCurrentStep(4);
-      } else if (option === 2) {
-        setCurrentStep(2);
-        setInputValue('');
-      } else {
-        onClose();
-      }
+    } else {
+      onClose();
     }
-  };
+  } 
+  // Rest of your existing handleGhanaJollof logic...
+  else if (currentStep === 1) {
+    if (option === 1) {
+      setCurrentStep(2);
+    } else {
+      setGameResult({
+        won: false,
+        message: 'Wrong ingredient! Try again.'
+      });
+      setCurrentStep(5);
+    }
+  } 
+  // ... rest of your existing conditions
+};
 
   const handleGoldMine = (option: number) => {
     if (currentStep === 0) {
