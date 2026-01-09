@@ -2,7 +2,7 @@
 
 'use client'
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from "@/components/ui/button"
 import { X, ArrowRight } from "lucide-react"
 import { useStartMissionMutation } from '@/lib/redux/api/ghanaJollofApi';
@@ -26,26 +26,41 @@ export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator 
   const [pin, setPin] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [gameResult, setGameResult] = useState<any>(null);
+
+  
   const [gameState, setGameState] = useState<any>({
     location: '',
     miningOption: 0,
     multiplier: 1
   });
 
-  const ingredientOptions = useMemo(() => {
-  try {
-    if (game.name === 'Ghana Jollof') {
-      const storedOptions = secureStorage.getSession('ingredient_options');
-      return storedOptions ? JSON.parse(storedOptions) : [];
-    }
-    return [];
-  } catch (e) {
-    console.error('Error parsing ingredient options:', e);
-    return [];
-  }
-}, [game.name]);
+const [ingredientOptions, setIngredientOptions] = useState<{text: string, value: number, disabled?: boolean}[] | null>(null);
 
-console.log("oh boy",ingredientOptions)
+useEffect(() => {
+  if (game.name === 'Ghana Jollof' && currentStep === 1) { // Check if we're on the ingredient selection step
+    const loadOptions = () => {
+      try {
+        const storedOptions = secureStorage.getSession('ingredient_options');
+        if (storedOptions) {
+          const parsedOptions = JSON.parse(storedOptions);
+          console.log('Loaded ingredient options:', parsedOptions);
+          setIngredientOptions(parsedOptions);
+        } else {
+          console.log('No ingredient options found in storage');
+          setIngredientOptions(null);
+        }
+      } catch (e) {
+        console.error('Error loading ingredients:', e);
+        setIngredientOptions([{ text: 'Error loading ingredients', value: 0, disabled: true }]);
+      }
+    };
+    
+    loadOptions();
+  }
+}, [game.name, currentStep]);
+
+console.log('ingredientOptions', ingredientOptions);
+
 
   // Game specific data
   const gameFlows = {
@@ -62,11 +77,12 @@ console.log("oh boy",ingredientOptions)
         {
           title: 'PICK ONE OPTION',
           message: 'Pick one option with the secret ingredient',
-         options: ingredientOptions.length > 0 
+        options: ingredientOptions === null 
+    ? [{ text: 'Loading ingredients...', value: 0, disabled: true }]
+    : (ingredientOptions.length > 0 
         ? ingredientOptions 
-        : [
-            { text: 'Loading ingredients...', value: 0, disabled: true }
-          ],
+        : [{ text: 'No ingredients available', value: 0, disabled: true }]
+      ),
       isDynamic: true
         },
         {
@@ -271,6 +287,10 @@ console.log("oh boy",ingredientOptions)
         }).unwrap();
 
         console.log('Mission started:', result);
+        const storedOptions = secureStorage.getSession('ingredient_options');
+        if (storedOptions) {
+          setIngredientOptions(JSON.parse(storedOptions));
+        }
         setCurrentStep(1); // Move to next step after successful mission start
       } catch (error) {
         console.error('Error starting mission:', error);
@@ -473,6 +493,8 @@ console.log("oh boy",ingredientOptions)
 
     const step = currentGame.steps[currentStep];
     const isLastStep = currentStep === currentGame.steps.length - 1;
+
+    
 
     return (
       <div className="space-y-4">
