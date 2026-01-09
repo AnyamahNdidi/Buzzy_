@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from "@/components/ui/button"
 import { X, ArrowRight } from "lucide-react"
-import { useStartMissionMutation } from '@/lib/redux/api/ghanaJollofApi';
+import { useJollofAmountWebMutation, useStartMissionMutation } from '@/lib/redux/api/ghanaJollofApi';
 import { secureStorage } from '@/lib/redux/api/ghanaJollofApi';
 
 interface USSDGameFlowProps {
@@ -18,6 +18,7 @@ interface USSDGameFlowProps {
 
 export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator }: USSDGameFlowProps) {
    const [startMission] = useStartMissionMutation();
+   const [jollofAmountWeb] = useJollofAmountWebMutation();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -26,6 +27,7 @@ export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator 
   const [pin, setPin] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [gameResult, setGameResult] = useState<any>(null);
+  const [selectedIngredient, setSelectedIngredient] = useState<number | null>(null);
 
   
   const [gameState, setGameState] = useState<any>({
@@ -97,10 +99,14 @@ console.log('ingredientOptions', ingredientOptions);
         },
         {
           title: 'CONFIRM PAYMENT',
-          message: (amount: number) => 
-            `Confirm you want to play with GHS${amount}\n` +
-            'You will receive a prompt to approve payment or check approval if you don\'t get prompt.\n' +
-            'Check SMS for result upon successful payment.',
+          message: (amount: number) => {
+            const winningMessage = typeof window !== 'undefined' ? secureStorage.getSession('winning_message') : null;
+            return winningMessage || (
+              `Confirm you want to play with GHS${amount}\n` +
+              'You will receive a prompt to approve payment or check approval if you don\'t get prompt.\n' +
+              'Check SMS for result upon successful payment.'
+            );
+          },
           options: [
             { text: 'CONFIRM', value: 1 },
             { text: 'CANCEL', value: 2 }
@@ -291,6 +297,7 @@ console.log('ingredientOptions', ingredientOptions);
         if (storedOptions) {
           setIngredientOptions(JSON.parse(storedOptions));
         }
+        setSelectedIngredient(option);
         setCurrentStep(1); // Move to next step after successful mission start
       } catch (error) {
         console.error('Error starting mission:', error);
@@ -302,7 +309,7 @@ console.log('ingredientOptions', ingredientOptions);
       onClose();
     }
   } 
-  // Rest of your existing handleGhanaJollof logic...
+
   else if (currentStep === 1) {
     if (option === 1) {
       setCurrentStep(2);
@@ -314,9 +321,43 @@ console.log('ingredientOptions', ingredientOptions);
       setCurrentStep(5);
     }
   } 
-  // ... rest of your existing conditions
+  
 };
 
+const handleAmountSubmit = async (amount: number) => {
+  try {
+    setIsProcessing(true);
+    
+    // Get all the stored values
+    const number = secureStorage.getSession('current_number');
+    const network = secureStorage.getSession('current_network');
+    const gameName = secureStorage.getSession('current_game_name');
+    const sessionId = secureStorage.getSession('current_session_id');
+    
+    if (!number || !network || !gameName || !sessionId || selectedIngredient === null) {
+      console.error('Missing required data for amount submission');
+      return;
+    }
+
+    const result = await jollofAmountWeb({
+      amount,
+      number,
+      user_ingredient_selection: selectedIngredient.toString(),
+      network,  // Make sure this is included
+      game_name: gameName,
+      session_id: sessionId
+    }).unwrap();
+
+    console.log('Amount submitted:', result);
+    setCurrentStep(3); // Move to confirmation step
+    
+  } catch (error) {
+    console.error('Error submitting amount:', error);
+    // Handle error (show error message to user)
+  } finally {
+    setIsProcessing(false);
+  }
+};
   const handleGoldMine = (option: number) => {
     if (currentStep === 0) {
       const locations = ['', 'Sunyani Golden Gate', 'Ntronang Golden Bend', 'Mampong Hidden Hills', 'Damongo Golden Valley'];
@@ -509,9 +550,27 @@ console.log('ingredientOptions', ingredientOptions);
         </div>
 
         {step.input ? (
-          <form onSubmit={handleInputSubmit} className="space-y-4">
+          <form onSubmit={(e) => {
+  e.preventDefault();
+  if (step.title === 'CHOOSE AMOUNT') {
+    handleAmountSubmit(Number(inputValue));
+  } else if (step.title === 'ENTER PIN') {
+    // Your existing PIN handling logic
+    if (game.name === 'Ghana Jollof') {
+      // Handle PIN submission for Ghana Jollof
+    } else if (game.name === 'Gold Mine') {
+      handleGoldMine(Number(pin));
+    } else if (game.name === 'Trotro') {
+      handleTrotro(Number(pin));
+    }
+  }
+}} className="space-y-4">
             <input
               type={step.input.type}
+              placeholder={step.input.placeholder}
+              min={step.input.min}
+              max={step.input.max}
+              maxLength={step.input.maxLength}
               value={step.input.type === 'password' ? pin : inputValue}
               onChange={(e) => {
                 if (step.input.type === 'password') {
@@ -521,10 +580,6 @@ console.log('ingredientOptions', ingredientOptions);
                 }
               }}
               className="w-full p-3 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={step.input.placeholder}
-              min={step.input.min}
-              max={step.input.max}
-              maxLength={step.input.maxLength as any}
               required
             />
             <div className="flex justify-between">

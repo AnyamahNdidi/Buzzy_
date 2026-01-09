@@ -42,24 +42,30 @@ export interface StartMissionResponse {
 // ==================== JOLLOF AMOUNT WEB TYPES ====================
 
 export interface JollofAmountWebRequest {
-  session_id: string;      // From start_playing response
-  number: string;          // From start_playing response
-  game_name: string;       // From start_playing response
-  amount: number;          // Payment amount
-  currency?: string;       // "GHS"
+  amount: number;                  // Payment amount
+  number: string;                  // User's phone number
+  user_ingredient_selection: string; // The selected ingredient
+  network: string;                 // Network provider (e.g., "MTN")
+  game_name: string;               // Game name (e.g., "GHANA_JOLLOF")
+  session_id: string;              // Session ID from start_playing
+  currency?: string;               // Optional currency (e.g., "GHS")
 }
 
 export interface JollofAmountWebResponse {
-  // Add the actual response structure when you have it
-  success: boolean;
+  number: string;
   amount: number;
-  total_amount: number;
-  fees: {
-    service_fee: number;
-    tax: number;
+  Winning_message: string;
+  game_name: string;
+  network: string;
+  session: string;
+  // Optional fields if they exist in some responses
+  success?: boolean;
+  total_amount?: number;
+  fees?: {
+    service_fee?: number;
+    tax?: number;
   };
-  transaction_id: string;
-  session_id: string;
+  transaction_id?: string;
 }
 
 // ==================== JOLLOF PAYMENT WEB TYPES ====================
@@ -345,9 +351,25 @@ export const ghanaJollofGameApi = createApi({
         body: amountData,
       }),
       transformResponse: (response: JollofAmountWebResponse) => {
-        // Store transaction ID for reference in next step
-        if (typeof window !== 'undefined' && response.transaction_id) {
-          secureStorage.setSession('pending_transaction_id', response.transaction_id);
+        if (typeof window !== 'undefined') {
+          // Store all response data in secure storage
+          secureStorage.setSession('current_number', response.number);
+          secureStorage.setSession('current_game_name', response.game_name);
+          secureStorage.setSession('current_network', response.network);
+          secureStorage.setSession('current_session', response.session);
+          
+          // Store the winning message for display
+          if (response.Winning_message) {
+            secureStorage.setSession('winning_message', response.Winning_message);
+          }
+          
+          // Store amount and transaction ID
+          if (response.amount) {
+            secureStorage.setSession('current_amount', response.amount.toString());
+          }
+          if (response.transaction_id) {
+            secureStorage.setSession('pending_transaction_id', response.transaction_id);
+          }
         }
         return response;
       },
