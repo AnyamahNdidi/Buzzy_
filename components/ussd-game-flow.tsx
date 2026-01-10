@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from "@/components/ui/button"
 import { X, ArrowRight } from "lucide-react"
-import { useJollofAmountWebMutation, useStartMissionMutation } from '@/lib/redux/api/ghanaJollofApi';
+import { useJollofAmountWebMutation, useStartMissionMutation, useJollofPaymentMutation  } from '@/lib/redux/api/ghanaJollofApi';
 import { secureStorage } from '@/lib/redux/api/ghanaJollofApi';
 
 interface USSDGameFlowProps {
@@ -19,6 +19,9 @@ interface USSDGameFlowProps {
 export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator }: USSDGameFlowProps) {
    const [startMission] = useStartMissionMutation();
    const [jollofAmountWeb] = useJollofAmountWebMutation();
+   // Inside your USSDGameFlow component, add these state variables
+const [triggerJollofPayment, { isLoading: isPaymentLoading }] = useJollofPaymentMutation();
+const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -107,12 +110,21 @@ console.log('ingredientOptions', ingredientOptions);
               'Check SMS for result upon successful payment.'
             );
           },
-          options: [
-            { text: 'CONFIRM', value: 1 },
-            { text: 'CANCEL', value: 2 }
-          ]
+            options: [
+    { 
+      text: isPaymentLoading ? 'PROCESSING...' : 'CONFIRM', 
+      value: 1,
+      onClick: () => handleConfirm(),  // Connect the handler here
+      disabled: isPaymentLoading
+    },
+    { 
+      text: 'CANCEL', 
+      value: 2,
+      onClick: onClose
+    }
+  ]
         },
-        {
+{
           title: 'ENTER PIN',
           message: (amount: number) => 
             `Pay GHS ${amount.toFixed(2)} to OneWallet?\n` +
@@ -123,7 +135,7 @@ console.log('ingredientOptions', ingredientOptions);
             placeholder: 'Enter PIN',
             maxLength: 4
           }
-        }
+        }        
       ]
     },
     'Gold Mine': {
@@ -356,6 +368,43 @@ const handleAmountSubmit = async (amount: number) => {
     // Handle error (show error message to user)
   } finally {
     setIsProcessing(false);
+  }
+};
+
+const handleConfirm = async () => {
+  if (isPaymentLoading) return;
+  
+  setPaymentStatus('processing');
+  
+  try {
+    const paymentData = {
+      confirmed: true,
+      amount: parseFloat(secureStorage.getSession('current_amount') || '0'),
+      number: secureStorage.getSession('current_number') || '',
+      network: secureStorage.getSession('current_network') || 'MTN',
+      game_name: secureStorage.getSession('current_game_name') || 'WEBJOLLOF',
+      endpoint_url: `https://webhook.site/f0219bad-9afa-421c-9ff3-4bf67ca39006`,
+      session_id: secureStorage.getSession('current_session') || ''
+    };
+
+    const result = await triggerJollofPayment(paymentData).unwrap();
+    console.log('Payment initiated:', result);
+    setPaymentStatus('success');
+    
+   
+    setTimeout(() => {
+      setCurrentStep(prev => prev + 1);
+      setPaymentStatus('idle');
+    }, 2000);
+    
+  } catch (error) {
+    console.error('Payment failed:', error);
+    setPaymentStatus('error');
+    
+    // Reset error state after 3 seconds
+    setTimeout(() => {
+      setPaymentStatus('idle');
+    }, 3000);
   }
 };
   const handleGoldMine = (option: number) => {
@@ -605,16 +654,33 @@ const handleAmountSubmit = async (amount: number) => {
           </form>
         ) : (
           <div className="space-y-2">
-            {step.options?.map((option:any) => (
-              <Button
-                key={option.value}
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => handleOptionSelect(option.value)}
-              >
-                {option.value}. {option.text}
-              </Button>
-            ))}
+           {step.options?.map((option:any) => {
+  // Add this button rendering logic
+  return (
+    <button
+      key={option.value}
+      onClick={() => {
+        if (option.onClick) {
+          option.onClick();
+        } else if (option.value === 1) {
+          handleConfirm();
+        } else if (option.value === 2) {
+          onClose();
+        } else {
+          handleOptionSelect(option.value);
+        }
+      }}
+      disabled={option.disabled || isPaymentLoading}
+      className={`w-full p-3 rounded mb-2 text-center ${
+        option.disabled || isPaymentLoading
+          ? 'bg-gray-400 cursor-not-allowed' 
+          : 'bg-blue-600 hover:bg-blue-700'
+      } text-white`}
+    >
+      {option.text}
+    </button>
+  );
+})}
           </div>
         )}
       </div>

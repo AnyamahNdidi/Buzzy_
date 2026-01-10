@@ -71,13 +71,13 @@ export interface JollofAmountWebResponse {
 // ==================== JOLLOF PAYMENT WEB TYPES ====================
 
 export interface JollofPaymentRequest {
-  session_id: string;      // From start_playing response
-  number: string;          // From start_playing response
-  game_name: string;       // From start_playing response
+  confirmed: boolean;      // Always true for confirmation
   amount: number;          // Amount from jollof_amount_web
-  transaction_id: string;  // From jollof_amount_web response
-  payment_method: string;  // "mobile_money", "card"
-  // Add other payment-specific fields
+  number: string;          // User's phone number
+  network: string;         // Network provider (e.g., "MTN")
+  game_name: string;       // Game name (e.g., "WEBJOLLOF")
+  endpoint_url: string;    // Callback URL for payment confirmation
+  session_id: string;      // Session ID from start_playing
 }
 
 export interface JollofPaymentResponse {
