@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from "@/components/ui/button"
 import { X, ArrowRight } from "lucide-react"
-import { useJollofAmountWebMutation, useStartMissionMutation } from '@/lib/redux/api/ghanaJollofApi';
+import { useJollofAmountWebMutation, useStartMissionMutation,useJollofPaymentMutation  } from '@/lib/redux/api/ghanaJollofApi';
 import { secureStorage } from '@/lib/redux/api/ghanaJollofApi';
 
 interface USSDGameFlowProps {
@@ -19,6 +19,7 @@ interface USSDGameFlowProps {
 export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator }: USSDGameFlowProps) {
    const [startMission] = useStartMissionMutation();
    const [jollofAmountWeb] = useJollofAmountWebMutation();
+   const [isWaitingForResult, setIsWaitingForResult] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -111,11 +112,16 @@ console.log('ingredientOptions', ingredientOptions);
             );
           },
           options: [
-            { text: 'CONFIRM', value: 1 },
+            { 
+      text: isPaymentLoading ? 'PROCESSING...' : 'CONFIRM', 
+      value: 1,
+      onClick: () => handleConfirm(),  // Connect to handleConfirm
+      disabled: isPaymentLoading
+    },
             { text: 'CANCEL', value: 2 }
           ]
         },
-{
+        {
           title: 'ENTER PIN',
           message: (amount: number) => 
             `Pay GHS ${amount.toFixed(2)} to OneWallet?\n` +
@@ -126,7 +132,7 @@ console.log('ingredientOptions', ingredientOptions);
             placeholder: 'Enter PIN',
             maxLength: 4
           }
-        }        
+        }
       ]
     },
     'Gold Mine': {
@@ -361,6 +367,87 @@ const handleAmountSubmit = async (amount: number) => {
     setIsProcessing(false);
   }
 };
+
+const handleConfirm = async () => {
+  if (isPaymentLoading) return;
+  
+  setPaymentStatus('processing');
+  
+  try {
+    // Generate a unique transaction ID
+    const transactionId = `tx_${Date.now()}`;
+    
+    // Store transaction ID for reference
+    secureStorage.setSession('current_transaction_id', transactionId);
+    
+    // Set up the webhook URL with transaction ID as parameter
+    const webhookUrl = `https://webhook.site/f0219bad-9afa-421c-9ff3-4bf67ca39006?tx_id=${transactionId}`;
+    
+    // Prepare payment data
+    const paymentData = {
+      confirmed: true,
+      amount: parseFloat(secureStorage.getSession('current_amount') || '0'),
+      number: secureStorage.getSession('current_number') || '',
+      network: secureStorage.getSession('current_network') || 'MTN',
+      game_name: secureStorage.getSession('current_game_name') || 'WEBJOLLOF',
+      endpoint_url: webhookUrl,
+      session_id: secureStorage.getSession('current_session') || ''
+    };
+    // Show waiting state
+    setIsWaitingForResult(true);
+    
+    // Start listening for webhook response
+    startListeningForWebhook(transactionId);
+    
+    // Send payment request
+    const result = await triggerJollofPayment(paymentData).unwrap();
+    console.log('Payment initiated:', result);
+    
+  } catch (error) {
+    console.error('Payment failed:', error);
+    setPaymentStatus('error');
+    setTimeout(() => setPaymentStatus('idle'), 3000);
+    setIsWaitingForResult(false);
+  }
+};
+
+const startListeningForWebhook = (transactionId: string) => {
+  // In a real app, you would set up a WebSocket or Server-Sent Events connection here
+  // For demo, we'll simulate a response after a delay
+  const checkInterval = setInterval(() => {
+    // Check if we've received a response (in a real app, this would check your backend)
+    const response = window.localStorage.getItem(`webhook_response_${transactionId}`);
+    
+    if (response) {
+      try {
+        const result = JSON.parse(response);
+        clearInterval(checkInterval);
+        
+        // Process the webhook response
+        setGameResult(result);
+        setIsWaitingForResult(false);
+        
+        // Clear the stored response
+        window.localStorage.removeItem(`webhook_response_${transactionId}`);
+        
+      } catch (error) {
+        console.error('Error processing webhook response:', error);
+      }
+    }
+  }, 2000); // Check every 2 seconds
+  // Timeout after 5 minutes
+  setTimeout(() => {
+    clearInterval(checkInterval);
+    if (!gameResult) {
+      setGameResult({
+        status: 'error',
+        message: 'No response received. Please check your SMS for results.'
+      });
+      setIsWaitingForResult(false);
+    }
+  }, 5 * 60 * 1000); // 5 minutes
+};
+
   const handleGoldMine = (option: number) => {
     if (currentStep === 0) {
       const locations = ['', 'Sunyani Golden Gate', 'Ntronang Golden Bend', 'Mampong Hidden Hills', 'Damongo Golden Valley'];
@@ -613,7 +700,7 @@ const handleAmountSubmit = async (amount: number) => {
                 key={option.value}
                 variant="outline"
                 className="w-full justify-start"
-                onClick={() => handleOptionSelect(option.value)}
+                 onClick={option.onClick || (() => handleOptionSelect(option.value))}
               >
                 {option.value}. {option.text}
               </Button>
