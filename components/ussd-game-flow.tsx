@@ -23,6 +23,7 @@ export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator 
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [showResultModal, setShowResultModal] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [amount, setAmount] = useState('');
   const [pin, setPin] = useState('');
@@ -121,18 +122,11 @@ console.log('ingredientOptions', ingredientOptions);
             { text: 'CANCEL', value: 2 }
           ]
         },
-        {
-          title: 'ENTER PIN',
-          message: (amount: number) => 
-            `Pay GHS ${amount.toFixed(2)} to OneWallet?\n` +
-            'Reference: JollofRush\n' +
-            'Please enter your pin to confirm',
-          input: {
-            type: 'password',
-            placeholder: 'Enter PIN',
-            maxLength: 4
-          }
-        }
+         {
+        title: 'PROCESSING',
+        message: 'Your game is being processed. Please wait...',
+        isWaiting: true
+      }
       ]
     },
     'Gold Mine': {
@@ -396,12 +390,17 @@ const handleConfirm = async () => {
     // Show waiting state
     setIsWaitingForResult(true);
     
-    // Start listening for webhook response
-    startListeningForWebhook(transactionId);
-    
+  
     // Send payment request
     const result = await triggerJollofPayment(paymentData).unwrap();
     console.log('Payment initiated:', result);
+
+     // Move to the waiting step
+    setCurrentStep(prev => prev + 1);
+    
+    // Start listening for webhook response
+    startListeningForWebhook(transactionId);
+    
     
   } catch (error) {
     console.error('Payment failed:', error);
@@ -412,40 +411,70 @@ const handleConfirm = async () => {
 };
 
 const startListeningForWebhook = (transactionId: string) => {
-  // In a real app, you would set up a WebSocket or Server-Sent Events connection here
-  // For demo, we'll simulate a response after a delay
-  const checkInterval = setInterval(() => {
-    // Check if we've received a response (in a real app, this would check your backend)
-    const response = window.localStorage.getItem(`webhook_response_${transactionId}`);
-    
-    if (response) {
-      try {
-        const result = JSON.parse(response);
-        clearInterval(checkInterval);
+  const maxAttempts = 30; // 30 attempts * 2 seconds = 1 minute total
+  let attempts = 0;
+  
+  const checkWebhook = async () => {
+    try {
+      // In a real app, you would check your backend for the webhook response
+      // For now, we'll simulate checking the webhook.site URL
+      const response = await fetch(`https://webhook.site/token/f0219bad-9afa-421c-9ff3-4bf67ca39006/requests?sorting=newest`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch webhook data');
+      }
+      
+      const data = await response.json();
+      const matchingRequest = data.data.find((request: any) => 
+        request.query && request.query.tx_id === transactionId
+      );
+      
+      if (matchingRequest) {
+        const webhookData = JSON.parse(matchingRequest.content);
         
-        // Process the webhook response
+        const result = {
+          status: webhookData.status || 'success',
+          message: webhookData.message || 'Your game has been processed successfully!',
+          ...webhookData
+        };
+        
         setGameResult(result);
         setIsWaitingForResult(false);
-        
-        // Clear the stored response
-        window.localStorage.removeItem(`webhook_response_${transactionId}`);
-        
-      } catch (error) {
-        console.error('Error processing webhook response:', error);
+        setShowResultModal(true); // Show the result modal
+        return;
+      }
+      
+      attempts++;
+      if (attempts < maxAttempts) {
+        setTimeout(checkWebhook, 2000);
+      } else {
+        const timeoutResult = {
+          status: 'error',
+          message: 'No response received. Please check your SMS for results.'
+        };
+        setGameResult(timeoutResult);
+        setIsWaitingForResult(false);
+        setShowResultModal(true);
+      }
+      
+    } catch (error) {
+      console.error('Error checking webhook:', error);
+      attempts++;
+      if (attempts < maxAttempts) {
+        setTimeout(checkWebhook, 2000);
+      } else {
+        const errorResult = {
+          status: 'error',
+          message: 'Error checking game status. Please check your SMS for results.'
+        };
+        setGameResult(errorResult);
+        setIsWaitingForResult(false);
+        setShowResultModal(true);
       }
     }
-  }, 2000); // Check every 2 seconds
-  // Timeout after 5 minutes
-  setTimeout(() => {
-    clearInterval(checkInterval);
-    if (!gameResult) {
-      setGameResult({
-        status: 'error',
-        message: 'No response received. Please check your SMS for results.'
-      });
-      setIsWaitingForResult(false);
-    }
-  }, 5 * 60 * 1000); // 5 minutes
+  };
+
+  checkWebhook();
 };
 
   const handleGoldMine = (option: number) => {
@@ -660,7 +689,7 @@ const startListeningForWebhook = (transactionId: string) => {
               placeholder={step.input.placeholder}
               min={step.input.min}
               max={step.input.max}
-              maxLength={step.input.maxLength}
+              // maxLength={step.input.maxLength}
               value={step.input.type === 'password' ? pin : inputValue}
               onChange={(e) => {
                 if (step.input.type === 'password') {
@@ -731,7 +760,61 @@ const startListeningForWebhook = (transactionId: string) => {
         <div className="text-center text-xs text-gray-400">
           <p>Dial *245# to play via USSD</p>
         </div>
+        {/* Add these components here */}
+    {isWaitingForResult && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="bg-gradient-to-b from-[#1E1E2D] to-[#2D2D42] rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-xl">
+      <div className="flex flex-col items-center text-center space-y-4">
+        <div className="w-24 h-24 relative">
+          <img 
+            src="/gi.png" 
+            alt="Processing your game..." 
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <h3 className="text-xl font-semibold text-white">Processing Your Game</h3>
+        <p className="text-gray-300 text-sm">Please wait while we check your game result...</p>
+        <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+          <div 
+            className="bg-gradient-to-r from-yellow-400 to-orange-500 h-full rounded-full transition-all duration-300" 
+            // style={{ width: `${(attempts / maxAttempts) * 100}%` }}
+          ></div>
+        </div>
       </div>
+    </div>
+  </div>
+)}
+{/* Result Modal */}
+{showResultModal && gameResult && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="bg-gradient-to-b from-[#1E1E2D] to-[#2D2D42] rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-xl">
+      <div className="flex flex-col items-center text-center space-y-4">
+        <div className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl ${
+          gameResult.status === 'success' ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
+        }`}>
+          {gameResult.status === 'success' ? '🎉' : '❌'}
+        </div>
+        <h3 className="text-2xl font-bold text-white">
+          {gameResult.status === 'success' ? 'Success!' : 'Game Complete'}
+        </h3>
+        <p className="text-gray-300 text-center mb-6">{gameResult.message}</p>
+        
+        <Button 
+          onClick={() => {
+            setShowResultModal(false);
+            onClose();
+          }}
+          className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-medium rounded-lg py-2.5 transition-all duration-200 transform hover:scale-[1.02]"
+        >
+          Done
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+      </div>
+
+      
     </div>
   );
 }

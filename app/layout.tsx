@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { ReduxProvider } from "@/lib/redux/provider"
+import { initializeApp } from "@/lib/redux/api/authInitializer"
 
 // Using Inter as a fallback font since Geist isn't available via Google Fonts
 const inter = Inter({ subsets: ["latin"] })

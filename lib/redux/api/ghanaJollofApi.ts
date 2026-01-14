@@ -2,6 +2,16 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_GHANA_JOLLOF_API_URL || 'https://buzzycashghana.viaspark.site';
 
+
+interface LoginRequest {
+  username: string;
+  password: string;
+}
+interface LoginResponse {
+  Accesstoken: string;
+  Refreshtoken: string;
+  Time: string;
+}
 // ==================== START PLAYING TYPES ====================
 
 export interface StartPlayingRequest {
@@ -89,6 +99,8 @@ export interface JollofPaymentResponse {
   amount: number;
   timestamp: string;
 }
+
+
 
 // Helper function to get required headers
 function getHeaders(newSession: boolean = false): Record<string, string> {
@@ -225,22 +237,150 @@ const secureStorage = {
 //   },
 // });
 
-const baseQuery = fetchBaseQuery({
-  baseUrl: API_BASE_URL,
-  prepareHeaders: (headers) => {
-    // Only include these basic headers
-    headers.set('Content-Type', 'application/json');
-    headers.set('X-Requested-With', 'XMLHttpRequest');
-    return headers;
+const auth = {
+  isAuthenticated: false,
+  accessToken: '',
+  refreshToken: '',
+  async login() {
+    try {
+      const credentials = {
+        username: 'edwin',
+        password: 'cYyM$8272qMX)Ek' // In production, use environment variables
+      };
+      
+      const response = await fetch(`${API_BASE_URL}/connect/login/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(credentials)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+      
+      const data: LoginResponse = await response.json();
+      this.accessToken = data.Accesstoken;
+      this.refreshToken = data.Refreshtoken;
+      this.isAuthenticated = true;
+      
+      // Store tokens in secure storage
+      secureStorage.setSecure('access_token', data.Accesstoken);
+      secureStorage.setSecure('refresh_token', data.Refreshtoken);
+      
+      return data;
+    } catch (error) {
+      console.error('Authentication error:', error);
+      this.isAuthenticated = false;
+      this.accessToken = '';
+      this.refreshToken = '';
+      throw error;
+    }
   },
-});
+  async ensureAuthenticated() {
+    // Always force a new login to get a fresh token
+    try {
+      await this.login();
+      return true;
+    } catch (error) {
+      console.error('Failed to authenticate:', error);
+      return false;
+    }
+  },
+  getAuthHeader() {
+    return this.accessToken ? `Bearer ${this.accessToken}` : '';
+  }
+};
+
+const baseQuery = async (args: any, api: any, extraOptions: any) => {
+  try {
+    // Always ensure we have a fresh token before making the request
+    await auth.ensureAuthenticated();
+    
+    const result = await fetch(`${API_BASE_URL}${args.url}`, {
+      method: args.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Authorization': auth.getAuthHeader()
+      },
+      body: args.body ? JSON.stringify(args.body) : undefined,
+    });
+
+    // Handle non-200 responses
+    if (!result.ok) {
+      const errorText = await result.text();
+      console.error('API Error:', {
+        status: result.status,
+        statusText: result.statusText,
+        url: args.url,
+        error: errorText
+      });
+      
+      // If we get a 401 or 500, try to login again and retry once
+      if (result.status === 401 || result.status === 500) {
+        try {
+          // Force a new login
+          await auth.login();
+          
+          // Retry the request with the new token
+          const retryResult = await fetch(`${API_BASE_URL}${args.url}`, {
+            method: args.method || 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+              'Authorization': auth.getAuthHeader()
+            },
+            body: args.body ? JSON.stringify(args.body) : undefined,
+          });
+          
+          if (!retryResult.ok) {
+            throw new Error(`Request failed with status ${retryResult.status}`);
+          }
+          
+          const retryData = await retryResult.json();
+          return { data: retryData };
+          
+        } catch (retryError) {
+          console.error('Retry failed:', retryError);
+          throw new Error('Failed to refresh session');
+        }
+      }
+      
+      throw new Error(`Request failed with status ${result.status}`);
+    }
+
+    const data = await result.json();
+    return { data };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return {
+      error: {
+        status: 'CUSTOM_ERROR',
+        error: errorMessage
+      }
+    };
+  }
+};
 
 // Create the Ghana Jollof Game API slice
 export const ghanaJollofGameApi = createApi({
   reducerPath: 'ghanaJollofGameApi',
   baseQuery: baseQuery,
   tagTypes: ['GameSession', 'Mission', 'Payment', 'Transaction'],
+
+  
   endpoints: (builder) => ({
+
+     login: builder.mutation<LoginResponse, LoginRequest>({
+      query: (credentials) => ({
+        url: '/connect/login/',
+        method: 'POST',
+        body: credentials
+      })
+    }),
     // ==================== START PLAYING ====================
     /**
      * Start Playing - Initialize a new game session
@@ -474,6 +614,7 @@ export const ghanaJollofGameApi = createApi({
 // Export hooks for usage in components
 export const {
   // Mutations (POST requests)
+  useLoginMutation ,
   useStartPlayingMutation,
   useStartMissionMutation,
   useJollofAmountWebMutation,
@@ -485,6 +626,21 @@ export const {
   useHealthCheckQuery,
   useLazyHealthCheckQuery,
 } = ghanaJollofGameApi;
+
+export { auth };
+
+export async function initializeAuth() {
+  try {
+    const isAuthenticated = await auth.ensureAuthenticated();
+    console.log('Authentication initialized', { isAuthenticated });
+    return isAuthenticated;
+  } catch (error) {
+    console.error('Failed to initialize authentication:', error);
+    return false;
+  }
+}
+
+initializeAuth().catch(console.error);
 
 // Utility function to build mission request from session data
 export const buildMissionRequest = (
