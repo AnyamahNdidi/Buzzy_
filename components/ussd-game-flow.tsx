@@ -765,7 +765,7 @@ const startListeningForWebhook = (transactionId: string) => {
   <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div className="bg-gradient-to-b from-[#1E1E2D] to-[#2D2D42] rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-xl">
       <div className="flex flex-col items-center text-center space-y-4">
-        <div className="w-24 h-24 relative">
+        <div className="w-40 h-40 relative">
           <img 
             src="/gi.png" 
             alt="Processing your game..." 
