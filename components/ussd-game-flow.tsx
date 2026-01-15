@@ -66,7 +66,7 @@ useEffect(() => {
   }
 }, [game.name, currentStep]);
 
-console.log('ingredientOptions', ingredientOptions);
+
 
 
   // Game specific data
@@ -295,7 +295,7 @@ console.log('ingredientOptions', ingredientOptions);
           session_id: sessionId
         }).unwrap();
 
-        console.log('Mission started:', result);
+        // console.log('Mission started:', result);
         const storedOptions = secureStorage.getSession('ingredient_options');
         if (storedOptions) {
           setIngredientOptions(JSON.parse(storedOptions));
@@ -351,7 +351,7 @@ const handleAmountSubmit = async (amount: number) => {
       session_id: sessionId
     }).unwrap();
 
-    console.log('Amount submitted:', result);
+    // console.log('Amount submitted:', result);
     setCurrentStep(3); // Move to confirmation step
     
   } catch (error) {
@@ -393,7 +393,7 @@ const handleConfirm = async () => {
   
     // Send payment request
     const result = await triggerJollofPayment(paymentData).unwrap();
-    console.log('Payment initiated:', result);
+    // console.log('Payment initiated:', result);
 
      // Move to the waiting step
     setCurrentStep(prev => prev + 1);
@@ -411,7 +411,8 @@ const handleConfirm = async () => {
 };
 
 const startListeningForWebhook = (transactionId: string) => {
-  const maxAttempts = 30; // 30 attempts * 2 seconds = 1 minute total
+  // const maxAttempts = 30; // 30 attempts * 2 seconds = 1 minute total
+  const maxAttempts = 4; // 30 attempts * 2 seconds = 1 minute total
   let attempts = 0;
   
   const checkWebhook = async () => {
@@ -766,23 +767,48 @@ const startListeningForWebhook = (transactionId: string) => {
     <div className="bg-gradient-to-b from-[#1E1E2D] to-[#2D2D42] rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-xl">
       <div className="flex flex-col items-center text-center space-y-4">
         <div className="w-40 h-40 relative">
-          <img 
-            src="/gi.png" 
-            alt="Processing your game..." 
-            className="w-full h-full object-contain"
-          />
+          <div className="relative w-full h-full">
+            {/* Animated Jollof Image */}
+            <img 
+              src="/smokie.png" 
+              alt="Processing your game..." 
+              className="w-full h-full object-contain animate-bounce-slow"
+            />
+            {/* Floating particles for extra effect */}
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute rounded-full bg-yellow-400/30"
+                  style={{
+                    width: `${Math.random() * 10 + 5}px`,
+                    height: `${Math.random() * 10 + 5}px`,
+                    top: `${Math.random() * 100}%`,
+                    left: `${Math.random() * 100}%`,
+                    animation: `float ${2 + Math.random() * 3}s infinite ease-in-out`,
+                    animationDelay: `${Math.random() * 2}s`,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
         </div>
-        <h3 className="text-xl font-semibold text-white">Processing Your Game</h3>
-        <p className="text-gray-300 text-sm">Please wait while we check your game result...</p>
-        <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-          <div 
-            className="bg-gradient-to-r from-yellow-400 to-orange-500 h-full rounded-full transition-all duration-300" 
-            // style={{ width: `${(attempts / maxAttempts) * 100}%` }}
-          ></div>
-        </div>
+        <h3 className="text-xl font-semibold text-white animate-pulse">Processing Your Game</h3>
+        <p className="text-gray-300 text-sm">Cooking up something delicious...</p>
+       <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+  <div 
+    className="bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400 h-full rounded-full"
+    style={{ 
+      width: '100%',
+      backgroundSize: '200% 100%',
+      animation: 'progress 2s linear infinite, progressPulse 1.5s ease-in-out infinite'
+    }}
+  />
+</div>
       </div>
     </div>
   </div>
+
 )}
 {/* Result Modal */}
 {showResultModal && gameResult && (

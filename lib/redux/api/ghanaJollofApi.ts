@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_GHANA_JOLLOF_API_URL || 'https://buzzycashghana.viaspark.site';
+const API_BASE_URL = process.env.NEXT_PUBLIC_GHANA_JOLLOF_API_URL;
+
 
 
 interface LoginRequest {
@@ -237,16 +238,29 @@ const secureStorage = {
 //   },
 // });
 
+
+
+
+
 const auth = {
   isAuthenticated: false,
   accessToken: '',
   refreshToken: '',
   async login() {
     try {
-      const credentials = {
-        username: 'edwin',
-        password: 'cYyM$8272qMX)Ek' // In production, use environment variables
-      };
+      const username = 'edwin';
+    const password = 'cYyM$8272qMX)Ek';
+
+      console.log('Login attempt with username:', 
+      username ? 
+      `${username[0]}${'*'.repeat(username.length > 1 ? username.length - 1 : 0)}` : 
+      'not set'
+    );
+    
+    if (!username || !password) {
+      throw new Error('API credentials are not properly configured');
+    }
+    
       
       const response = await fetch(`${API_BASE_URL}/connect/login/`, {
         method: 'POST',
@@ -254,7 +268,7 @@ const auth = {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify(credentials)
+    body: JSON.stringify({ username, password })
       });
       
       if (!response.ok) {
