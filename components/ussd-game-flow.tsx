@@ -384,7 +384,7 @@ const handleConfirm = async () => {
       number: secureStorage.getSession('current_number') || '',
       network: secureStorage.getSession('current_network') || 'MTN',
       game_name: secureStorage.getSession('current_game_name') || 'WEBJOLLOF',
-      endpoint_url: webhookUrl,
+      // endpoint_url: webhookUrl,
       session_id: secureStorage.getSession('current_session') || ''
     };
     // Show waiting state
@@ -411,8 +411,8 @@ const handleConfirm = async () => {
 };
 
 const startListeningForWebhook = (transactionId: string) => {
-  // const maxAttempts = 30; // 30 attempts * 2 seconds = 1 minute total
-  const maxAttempts = 4; // 30 attempts * 2 seconds = 1 minute total
+  const maxAttempts = 30; // 30 attempts * 2 seconds = 1 minute total
+  // const maxAttempts = 4; // 30 attempts * 2 seconds = 1 minute total
   let attempts = 0;
   
   const checkWebhook = async () => {

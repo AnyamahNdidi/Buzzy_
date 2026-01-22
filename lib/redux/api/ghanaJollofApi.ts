@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_GHANA_JOLLOF_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_GHANA_JOLLOF_API_URL || 'https://buzzycashghana.viaspark.site';
 
 
 
@@ -87,7 +87,7 @@ export interface JollofPaymentRequest {
   number: string;          // User's phone number
   network: string;         // Network provider (e.g., "MTN")
   game_name: string;       // Game name (e.g., "WEBJOLLOF")
-  endpoint_url: string;    // Callback URL for payment confirmation
+  // endpoint_url: string;    // Callback URL for payment confirmation
   session_id: string;      // Session ID from start_playing
 }
 
