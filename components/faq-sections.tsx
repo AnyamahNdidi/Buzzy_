@@ -6,7 +6,7 @@ import { ChevronDown, ArrowRight } from "lucide-react"
 const faqs = [
   {
     category: "Wallet",
-    question: "How do I fund my wallet?",
+    question: "How do I fund my wallet? ",
     answer: "You can fund your wallet using bank transfer, card payment, or cryptocurrency. Simply go to your wallet page and click 'Add Funds' to see all available options."
   },
   {
