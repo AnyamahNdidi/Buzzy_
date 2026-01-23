@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_GHANA_JOLLOF_API_URL || 'https://buzzycashghana.viaspark.site';
+const API_BASE_URL = process.env.NEXT_PUBLIC_GHANA_JOLLOF_API_URL;
 
 
 
@@ -101,7 +101,13 @@ export interface JollofPaymentResponse {
   timestamp: string;
 }
 
+// ==================== JOLLOF GAME FINISH TYPES ====================
 
+export interface JollofGameFinishResponse {
+  // The response structure is not specified in the documentation
+  // Using a generic object type for now
+  [key: string]: any;
+}
 
 // Helper function to get required headers
 function getHeaders(newSession: boolean = false): Record<string, string> {
@@ -248,8 +254,12 @@ const auth = {
   refreshToken: '',
   async login() {
     try {
-      const username = 'edwin';
-    const password = 'cYyM$8272qMX)Ek';
+      console.log('API_BASE_URL:', API_BASE_URL);
+      console.log('NEXT_PUBLIC_API_USERNAME', process.env.NEXT_PUBLIC_API_USERNAME);
+      console.log('NEXT_PUBLIC_API_PASSWORD', process.env.NEXT_PUBLIC_API_PASSWORD);
+
+      const username = process.env.NEXT_PUBLIC_API_USERNAME ;
+      const password = process.env.NEXT_PUBLIC_API_PASSWORD ;
 
       console.log('Login attempt with username:', 
       username ? 
@@ -388,7 +398,20 @@ export const ghanaJollofGameApi = createApi({
   
   endpoints: (builder) => ({
 
-     login: builder.mutation<LoginResponse, LoginRequest>({
+    // Jollof Game Finish endpoint
+    jollofGameFinish: builder.mutation<JollofGameFinishResponse, void>({
+      query: () => ({
+        url: '/connect/jollof_game_finish/',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      })
+    }),
+
+    // Login endpoint
+    login: builder.mutation<LoginResponse, LoginRequest>({
       query: (credentials) => ({
         url: '/connect/login/',
         method: 'POST',
@@ -626,7 +649,7 @@ export const ghanaJollofGameApi = createApi({
 });
 
 // Export hooks for usage in components
-export const {
+export const { useJollofGameFinishMutation,
   // Mutations (POST requests)
   useLoginMutation ,
   useStartPlayingMutation,

@@ -2,10 +2,10 @@
 
 'use client'
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from "@/components/ui/button"
 import { X, ArrowRight } from "lucide-react"
-import { useJollofAmountWebMutation, useStartMissionMutation,useJollofPaymentMutation  } from '@/lib/redux/api/ghanaJollofApi';
+import { useJollofAmountWebMutation, useStartMissionMutation, useJollofPaymentMutation, useJollofGameFinishMutation } from '@/lib/redux/api/ghanaJollofApi';
 import { secureStorage } from '@/lib/redux/api/ghanaJollofApi';
 
 interface USSDGameFlowProps {
@@ -19,6 +19,7 @@ interface USSDGameFlowProps {
 export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator }: USSDGameFlowProps) {
    const [startMission] = useStartMissionMutation();
    const [jollofAmountWeb] = useJollofAmountWebMutation();
+   const [jollofGameFinish] = useJollofGameFinishMutation();
    const [isWaitingForResult, setIsWaitingForResult] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,6 +34,7 @@ export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator 
  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
 const isPaymentLoading = paymentStatus === 'processing';
 const [triggerJollofPayment] = useJollofPaymentMutation();
+const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   
   const [gameState, setGameState] = useState<any>({
@@ -374,9 +376,6 @@ const handleConfirm = async () => {
     // Store transaction ID for reference
     secureStorage.setSession('current_transaction_id', transactionId);
     
-    // Set up the webhook URL with transaction ID as parameter
-    const webhookUrl = `https://webhook.site/f0219bad-9afa-421c-9ff3-4bf67ca39006?tx_id=${transactionId}`;
-    
     // Prepare payment data
     const paymentData = {
       confirmed: true,
@@ -384,7 +383,6 @@ const handleConfirm = async () => {
       number: secureStorage.getSession('current_number') || '',
       network: secureStorage.getSession('current_network') || 'MTN',
       game_name: secureStorage.getSession('current_game_name') || 'WEBJOLLOF',
-      // endpoint_url: webhookUrl,
       session_id: secureStorage.getSession('current_session') || ''
     };
     // Show waiting state
@@ -398,8 +396,9 @@ const handleConfirm = async () => {
      // Move to the waiting step
     setCurrentStep(prev => prev + 1);
     
-    // Start listening for webhook response
-    startListeningForWebhook(transactionId);
+    setIsWaitingForResult(true);
+
+    startPollingGameStatus();    
     
     
   } catch (error) {
@@ -410,73 +409,63 @@ const handleConfirm = async () => {
   }
 };
 
-const startListeningForWebhook = (transactionId: string) => {
-  const maxAttempts = 30; // 30 attempts * 2 seconds = 1 minute total
-  // const maxAttempts = 4; // 30 attempts * 2 seconds = 1 minute total
+const stopPolling = () => {
+  if (pollingRef.current) {
+    clearInterval(pollingRef.current);
+    pollingRef.current = null;
+  }
+};
+
+const startPollingGameStatus = () => {
+  if (pollingRef.current) return; // ⛔ prevent duplicates
+
+  const transactionId = secureStorage.getSession('current_transaction_id');
+
   let attempts = 0;
-  
-  const checkWebhook = async () => {
+  const maxAttempts = 10;
+
+  pollingRef.current = setInterval(async () => {
+    attempts++;
+
     try {
-      // In a real app, you would check your backend for the webhook response
-      // For now, we'll simulate checking the webhook.site URL
-      const response = await fetch(`https://webhook.site/token/f0219bad-9afa-421c-9ff3-4bf67ca39006/requests?sorting=newest`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch webhook data');
-      }
-      
-      const data = await response.json();
-      const matchingRequest = data.data.find((request: any) => 
-        request.query && request.query.tx_id === transactionId
-      );
-      
-      if (matchingRequest) {
-        const webhookData = JSON.parse(matchingRequest.content);
-        
-        const result = {
-          status: webhookData.status || 'success',
-          message: webhookData.message || 'Your game has been processed successfully!',
-          ...webhookData
-        };
-        
-        setGameResult(result);
-        setIsWaitingForResult(false);
-        setShowResultModal(true); // Show the result modal
-        return;
-      }
-      
-      attempts++;
-      if (attempts < maxAttempts) {
-        setTimeout(checkWebhook, 2000);
-      } else {
-        const timeoutResult = {
-          status: 'error',
-          message: 'No response received. Please check your SMS for results.'
-        };
-        setGameResult(timeoutResult);
-        setIsWaitingForResult(false);
-        setShowResultModal(true);
-      }
-      
+      const result = await jollofGameFinish().unwrap();
+
+      // backend not ready yet
+      if (result.status === 'PENDING') return;
+
+      // ✅ final state reached
+      stopPolling();
+
+      setGameResult(result);
+      setIsWaitingForResult(false);
+      setShowResultModal(true);
+      setPaymentStatus('success');
+
     } catch (error) {
-      console.error('Error checking webhook:', error);
-      attempts++;
-      if (attempts < maxAttempts) {
-        setTimeout(checkWebhook, 2000);
-      } else {
-        const errorResult = {
-          status: 'error',
-          message: 'Error checking game status. Please check your SMS for results.'
-        };
-        setGameResult(errorResult);
+      console.error('Polling error:', error);
+
+      if (attempts >= maxAttempts) {
+        stopPolling();
+
+        setGameResult({
+          status: 'timeout',
+          message: 'Game is taking longer than expected. Please check your SMS.',
+        });
+
         setIsWaitingForResult(false);
         setShowResultModal(true);
       }
     }
-  };
-
-  checkWebhook();
+  }, 3000);
 };
+
+useEffect(() => {
+  return () => {
+    stopPolling(); 
+  };
+}, []);
+
+
 
   const handleGoldMine = (option: number) => {
     if (currentStep === 0) {
