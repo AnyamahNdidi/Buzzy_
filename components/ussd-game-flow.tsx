@@ -391,7 +391,7 @@ const handleConfirm = async () => {
   
     // Send payment request
     const result = await triggerJollofPayment(paymentData).unwrap();
-    // console.log('Payment initiated:', result);
+    // console.log('Payment initiated:', result);before we trigger 
 
      // Move to the waiting step
     setCurrentStep(prev => prev + 1);
@@ -416,47 +416,43 @@ const stopPolling = () => {
   }
 };
 
-const startPollingGameStatus = () => {
+const startPollingGameStatus = async () => {
   if (pollingRef.current) return; // ⛔ prevent duplicates
 
-  const transactionId = secureStorage.getSession('current_transaction_id');
+  const sessionId = secureStorage.getSession('current_session');
+  if (!sessionId) {
+    console.error('No session ID found for polling');
+    setGameResult({
+      status: 'error',
+      message: 'Session not found. Please try again.'
+    });
+    setShowResultModal(true);
+    return;
+  }
 
-  let attempts = 0;
-  const maxAttempts = 10;
+  try {
+    // Use the jollofPayment mutation to get the game result
+    const result = await triggerJollofPayment({ session_id: sessionId }).unwrap();
+    
+    // Update the UI with the result
+    setGameResult(result);
+    setIsWaitingForResult(false);
+    setShowResultModal(true);
+    setPaymentStatus('success');
 
-  pollingRef.current = setInterval(async () => {
-    attempts++;
-
-    try {
-      const result = await jollofGameFinish().unwrap();
-
-      // backend not ready yet
-      if (result.status === 'PENDING') return;
-
-      // ✅ final state reached
-      stopPolling();
-
-      setGameResult(result);
-      setIsWaitingForResult(false);
-      setShowResultModal(true);
-      setPaymentStatus('success');
-
-    } catch (error) {
-      console.error('Polling error:', error);
-
-      if (attempts >= maxAttempts) {
-        stopPolling();
-
-        setGameResult({
-          status: 'timeout',
-          message: 'Game is taking longer than expected. Please check your SMS.',
-        });
-
-        setIsWaitingForResult(false);
-        setShowResultModal(true);
-      }
-    }
-  }, 3000);
+  } catch (error) {
+    console.error('Failed to get game result:', error);
+    
+    setGameResult({
+      status: 'error',
+      message: 'Failed to get game result. Please check your SMS for confirmation.'
+    });
+    setShowResultModal(true);
+    setPaymentStatus('error');
+    setTimeout(() => setPaymentStatus('idle'), 3000);
+  } finally {
+    setIsWaitingForResult(false);
+  }
 };
 
 useEffect(() => {

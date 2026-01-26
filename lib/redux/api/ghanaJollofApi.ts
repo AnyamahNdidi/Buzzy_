@@ -554,39 +554,39 @@ export const ghanaJollofGameApi = createApi({
     // ==================== JOLLOF PAYMENT WEB ====================
     /**
      * Jollof Payment Web - Process payment
-     * POST /connect/jollof_payment/
-     * Request will need session_id, number, game_name, and transaction_id from jollof_amount_web
+     * POST /connect/game_over_web/
+     * Request will need session_id
      */
-    jollofPayment: builder.mutation<JollofPaymentResponse, JollofPaymentRequest>({
-      query: (paymentData) => ({
-        url: '/connect/jollof_payment/',
+    jollofPayment: builder.mutation<any, { session_id: string }>({
+      query: (data) => ({
+        url: '/connect/game_over_web/',
         method: 'POST',
-        body: paymentData,
-        
+        body: data,
       }),
-      transformResponse: (response: JollofPaymentResponse) => {
-        // Clear pending transaction
+      transformResponse: (response: any) => {
         if (typeof window !== 'undefined') {
           secureStorage.removeSession('pending_transaction_id');
           
-          // Store payment history (encrypted)
-          const paymentHistory = JSON.parse(
-            secureStorage.getSecure('payment_history') || '[]'
-          );
-          
-          paymentHistory.unshift({
-            payment_id: response.payment_id,
-            amount: response.amount,
-            status: response.status,
-            timestamp: response.timestamp,
-          });
-          
-          // Keep only last 20 payments
-          if (paymentHistory.length > 20) {
-            paymentHistory.pop();
+          // Store payment history (encrypted) if response contains payment data
+          if (response.payment_id) {
+            const paymentHistory = JSON.parse(
+              secureStorage.getSecure('payment_history') || '[]'
+            );
+            
+            paymentHistory.unshift({
+              payment_id: response.payment_id,
+              amount: response.amount,
+              status: response.status,
+              timestamp: response.timestamp || new Date().toISOString(),
+            });
+            
+            // Keep only last 20 payments
+            if (paymentHistory.length > 20) {
+              paymentHistory.pop();
+            }
+            
+            secureStorage.setSecure('payment_history', JSON.stringify(paymentHistory));
           }
-          
-          secureStorage.setSecure('payment_history', JSON.stringify(paymentHistory));
         }
         return response;
       },
