@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { X, ArrowRight } from "lucide-react"
 import { useJollofAmountWebMutation, useStartMissionMutation, useJollofPaymentMutation, useJollofGameFinishMutation } from '@/lib/redux/api/ghanaJollofApi';
 import { secureStorage } from '@/lib/redux/api/ghanaJollofApi';
+import { toast } from 'sonner';
 
 interface USSDGameFlowProps {
   game: any;
@@ -56,10 +57,12 @@ useEffect(() => {
           setIngredientOptions(parsedOptions);
         } else {
           console.log('No ingredient options found in storage');
+          toast.warning('No ingredient options found. Please try again.');
           setIngredientOptions(null);
         }
       } catch (e) {
         console.error('Error loading ingredients:', e);
+        toast.error('Error loading ingredients. Please try again.');
         setIngredientOptions([{ text: 'Error loading ingredients', value: 0, disabled: true }]);
       }
     };
@@ -280,7 +283,7 @@ useEffect(() => {
       const gameName = secureStorage.getSession('game_name');
 
       if (!sessionId || !gameNumber || !network || !gameName) {
-        // Handle missing session data
+        toast.error('Session expired. Please start the game again.');
         console.error('Missing session data');
         return;
       }
@@ -304,9 +307,11 @@ useEffect(() => {
         }
         setSelectedIngredient(option);
         setCurrentStep(1); // Move to next step after successful mission start
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error starting mission:', error);
-        // Handle error (show error message to user)
+        const errorMsg = error?.data?.message || 'Failed to start mission. Please try again.';
+        toast.error(errorMsg);
+        
       } finally {
         setIsProcessing(false);
       }
@@ -316,12 +321,14 @@ useEffect(() => {
   } 
 
   else if (currentStep === 1) {
-    if (option === 1) {
+    // Check if the selected option is a valid ingredient (non-zero value)
+    if (option > 0) {
+      setSelectedIngredient(option);
       setCurrentStep(2);
     } else {
       setGameResult({
         won: false,
-        message: 'Wrong ingredient! Try again.'
+        message: 'Invalid selection. Please try again.'
       });
       setCurrentStep(5);
     }
@@ -341,6 +348,8 @@ const handleAmountSubmit = async (amount: number) => {
     
     if (!number || !network || !gameName || !sessionId || selectedIngredient === null) {
       console.error('Missing required data for amount submission');
+      const errorMsg = 'Missing required data for amount submission.';
+      toast.error(errorMsg);
       return;
     }
 
@@ -354,11 +363,17 @@ const handleAmountSubmit = async (amount: number) => {
     }).unwrap();
 
     // console.log('Amount submitted:', result);
+    toast.success('Amount submitted successfully!');
     setCurrentStep(3); // Move to confirmation step
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error submitting amount:', error);
-    // Handle error (show error message to user)
+    const errorMsg = error?.data?.message || 'Failed to submit amount. Please try again.';
+    toast.error(errorMsg, {
+      duration: 5000,
+      position: 'top-center'
+    });
+    
   } finally {
     setIsProcessing(false);
   }
@@ -401,8 +416,13 @@ const handleConfirm = async () => {
     startPollingGameStatus();    
     
     
-  } catch (error) {
+  } catch (error:any) {
     console.error('Payment failed:', error);
+    const errorMsg = error?.data?.message || 'Payment failed. Please try again.';
+    toast.error(errorMsg, {
+      duration: 5000,
+      position: 'top-center'
+    });
     setPaymentStatus('error');
     setTimeout(() => setPaymentStatus('idle'), 3000);
     setIsWaitingForResult(false);
@@ -422,6 +442,8 @@ const startPollingGameStatus = async () => {
   const sessionId = secureStorage.getSession('current_session');
   if (!sessionId) {
     console.error('No session ID found for polling');
+    const errorMsg = 'Session not found. Please try again.';
+    toast.error(errorMsg);
     setGameResult({
       status: 'error',
       message: 'Session not found. Please try again.'
@@ -439,13 +461,16 @@ const startPollingGameStatus = async () => {
     setIsWaitingForResult(false);
     setShowResultModal(true);
     setPaymentStatus('success');
+    toast.success('Payment processed successfully!');
 
-  } catch (error) {
+  } catch (error:any) {
     console.error('Failed to get game result:', error);
     
+    const errorMsg = error?.data?.message || 'Failed to process payment. Please check your SMS for confirmation.';
+    toast.error(errorMsg);
     setGameResult({
       status: 'error',
-      message: 'Failed to get game result. Please check your SMS for confirmation.'
+      message: errorMsg
     });
     setShowResultModal(true);
     setPaymentStatus('error');

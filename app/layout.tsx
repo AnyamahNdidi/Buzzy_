@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { ReduxProvider } from "@/lib/redux/provider"
 import { initializeApp } from "@/lib/redux/api/authInitializer"
+import { Toaster } from 'sonner';
 
 // Using Inter as a fallback font since Geist isn't available via Google Fonts
 const inter = Inter({ subsets: ["latin"] })
@@ -44,6 +45,7 @@ export default function RootLayout({
         <ReduxProvider>
           {children}
           <Analytics />
+          <Toaster position="top-center" richColors />
         </ReduxProvider>
       </body>
     </html>
