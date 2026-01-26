@@ -418,7 +418,28 @@ const handleConfirm = async () => {
     
   } catch (error:any) {
     console.error('Payment failed:', error);
-    const errorMsg = error?.data?.message || 'Payment failed. Please try again.';
+     let errorMsg = 'Payment failed. Please try again.';
+    
+    // Check the error structure from your logs
+    if (error?.data?.message) {
+      // Direct message from API
+      errorMsg = error.data.message;
+    } else if (error?.data?.error) {
+      // Error might be in error.data.error (stringified JSON)
+      try {
+        const parsedError = JSON.parse(error.data.error);
+        if (parsedError.message) {
+          errorMsg = parsedError.message;
+        }
+      } catch {
+        // If it's not JSON, use it as is
+        errorMsg = error.data.error;
+      }
+    } else if (error?.error) {
+      // Error from RTK Query
+      errorMsg = error.error;
+    }
+    
     toast.error(errorMsg, {
       duration: 5000,
       position: 'top-center'
