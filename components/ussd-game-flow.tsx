@@ -34,6 +34,7 @@ export function USSDGameFlow({ game, onClose, onComplete, startGameResult, phone
    const [jollofGameFinish] = useJollofGameFinishMutation();
    const [isWaitingForResult, setIsWaitingForResult] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [trotroResult, setTrotroResult] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
@@ -229,7 +230,7 @@ useEffect(() => {
         },
         {
           title: 'CONTINUE JOURNEY',
-          message: 'Small stop, stretching legs...',
+          message: `${trotroResult?.journey}`,
           options: [
             { text: 'Continue', value: 1 },
             { text: 'Drop from the bus', value: 2 }
@@ -564,24 +565,13 @@ const handleTrotro = async (option: number) => {
       Object.keys(sessionStorage).forEach(key => {
         console.log(`${key}:`, sessionStorage.getItem(key));
       });
-     console.log('Direct sessionStorage access:', {
-  trotro_session_id: sessionStorage.getItem('trotro_session_id'),
-  trotro_game_number: sessionStorage.getItem('trotro_game_number'),
-  trotro_game_network: sessionStorage.getItem('trotro_game_network'),
-  trotro_game_name: sessionStorage.getItem('trotro_game_name')
-});
       // Get the required session data
      const sessionId = trotroSecureStorage.getSession('trotro_session_id');
-const gameNumber = trotroSecureStorage.getSession('trotro_game_number');
-const gameNetwork = trotroSecureStorage.getSession('trotro_game_network');
-const gameName = trotroSecureStorage.getSession('trotro_game_name');
+      const gameNumber = trotroSecureStorage.getSession('trotro_game_number');
+      const gameNetwork = trotroSecureStorage.getSession('trotro_game_network');
+      const gameName = trotroSecureStorage.getSession('trotro_game_name');
       
-      console.log("Session data from storage:", {
-        sessionId,
-        gameNumber,
-        gameNetwork,
-        gameName
-      });
+    
       if (!sessionId || !gameNumber || !gameNetwork || !gameName) {
         throw new Error('Session data is missing. Please start over.');
       }
@@ -594,6 +584,7 @@ const gameName = trotroSecureStorage.getSession('trotro_game_name');
         game_name: gameName,
         session_id: sessionId
       }).unwrap();
+      setTrotroResult(result);
       // Store the response data
       secureStorage.setSession('trotro_journey', result.journey);
       secureStorage.setSession('trotro_number', result.number)
@@ -602,6 +593,7 @@ const gameName = trotroSecureStorage.getSession('trotro_game_name');
       secureStorage.setSession('trotro_session', result.session)
      
       console.log("result:", result)
+      
       // Move to the next step
       setCurrentStep(2);
     } catch (error) {
