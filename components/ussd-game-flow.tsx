@@ -14,10 +14,11 @@ interface USSDGameFlowProps {
   onClose: () => void;
   onComplete: (result: any) => void;
   phoneNumber: string;
+  startGameResult: any;
   operator: string;
 }
 
-export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator }: USSDGameFlowProps) {
+export function USSDGameFlow({ game, onClose, onComplete, startGameResult, phoneNumber, operator }: USSDGameFlowProps) {
    const [startMission] = useStartMissionMutation();
    const [jollofAmountWeb] = useJollofAmountWebMutation();
    const [jollofGameFinish] = useJollofGameFinishMutation();
@@ -36,6 +37,8 @@ export function USSDGameFlow({ game, onClose, onComplete, phoneNumber, operator 
 const isPaymentLoading = paymentStatus === 'processing';
 const [triggerJollofPayment] = useJollofPaymentMutation();
 const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+
 
   
   const [gameState, setGameState] = useState<any>({
@@ -196,7 +199,7 @@ useEffect(() => {
       steps: [
         {
           title: 'JOURNEY BEGINS',
-          message: 'Your bus is ready to begin the journey from Madina to Accra Central',
+          message: `Your bus is ready to begin the journey from ${startGameResult?.data?.route}`,
           options: [
             { text: 'Start Riding', value: 1 },
             { text: 'Exit the Bus', value: 2 }
@@ -460,14 +463,14 @@ const stopPolling = () => {
 const startPollingGameStatus = async () => {
   if (pollingRef.current) return; // ⛔ prevent duplicates
 
-  const sessionId = secureStorage.getSession('current_session');
-  if (!sessionId) {
-    console.error('No session ID found for polling');
-    const errorMsg = 'Session not found. Please try again.';
+  const number = secureStorage.getSession('current_number');
+  if (!number) {
+    console.error('No phone number found for polling');
+    const errorMsg = 'Phone number not found. Please try again.';
     toast.error(errorMsg);
     setGameResult({
       status: 'error',
-      message: 'Session not found. Please try again.'
+      message: 'Phone number not found. Please try again.'
     });
     setShowResultModal(true);
     return;
@@ -475,7 +478,7 @@ const startPollingGameStatus = async () => {
 
   try {
     // Use the jollofPayment mutation to get the game result
-    const result = await triggerJollofPayment({ session_id: sessionId }).unwrap();
+    const result = await triggerJollofPayment({ number }).unwrap();
     
     // Update the UI with the result
     setGameResult(result);

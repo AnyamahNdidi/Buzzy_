@@ -5,6 +5,7 @@ import { useState } from "react"
 import { X, Play } from "lucide-react"
 import { USSDGameFlow } from "./ussd-game-flow"
 import { useStartPlayingMutation } from '@/lib/redux/api/ghanaJollofApi';
+import { useStartPlayingMutation as useTrotroStartPlayingMutation } from '@/lib/redux/api/trotroApi';
 export function SelectGame() {
   const [showPlayModal, setShowPlayModal] = useState(false)
   const [showGameFlow, setShowGameFlow] = useState(false)
@@ -12,8 +13,9 @@ export function SelectGame() {
   const [phoneNumber, setPhoneNumber] = useState("")
   const [amount, setAmount] = useState("")
   const [selectedOperator, setSelectedOperator] = useState("")
-
+  const [gameResult, setGameResult] = useState<any>(null)
    const [startPlaying, { isLoading }] = useStartPlayingMutation();
+   const [trotroStartPlaying, { isLoading: trotroLoading }] = useTrotroStartPlayingMutation();
   
 
   const games = [
@@ -61,9 +63,14 @@ export function SelectGame() {
 
   const handlePlayGame = (game: any) => {
     setSelectedGame(game)
+    console.log("Selected game:", game)
       try {
     // For Ghana Jollof game, we'll use the API
     if (game.name === "Ghana Jollof") {
+      setShowPlayModal(true);
+      return;
+    }else if (game.name === "Trotro"){
+      // For Trotro game, show the USSD flow
       setShowPlayModal(true);
       return;
     }
@@ -87,20 +94,34 @@ const handleStartGame = async () => {
     if (selectedGame?.name === "Ghana Jollof") {
       // Call the startPlaying mutation
       const result = await startPlaying({
-        game_name: "WEBJOLLOF", // Match the expected API value
+        game_name: process.env.NEXT_PUBLIC_JELLOFWEB || "WEBJOLLOF", // Match the expected API value
         phone_number: phoneNumber.replace(/\D/g, ''), // Remove any non-numeric characters
         network: selectedOperator.toUpperCase() // Ensure uppercase to match API expectations
       }).unwrap();
 
-      // The response will be handled by the transformResponse in the API slice
-      // You can access the response data here if needed
-      console.log('Game started:', result);
+      setGameResult(result);
       
       // Close the modal and show success or navigate to game
       setShowPlayModal(false);
       setShowGameFlow(true);
       // Optionally show success message or navigate to game screen
-    } else {
+    } else if (selectedGame?.name === "Trotro") {
+      // Call the startPlaying mutation
+      const result = await trotroStartPlaying({
+        game_name: process.env.NEXT_PUBLIC_TROTROWEB || "WEBTROTRO",
+        phone_number: phoneNumber.replace(/\D/g, ''), // Remove any non-numeric characters
+        network: selectedOperator.toUpperCase() // Ensure uppercase to match API expectations
+      }).unwrap();
+
+      setGameResult(result);
+      
+      // Close the modal and show success or navigate to game
+      setShowPlayModal(false);
+      setShowGameFlow(true);
+      // Optionally show success message or navigate to game screen
+    }
+    
+    else {
       // Handle other games
       setShowPlayModal(false);
       setShowGameFlow(true);
@@ -229,6 +250,7 @@ const handleStartGame = async () => {
             console.log('Game completed with result:', result)
             setShowGameFlow(false)
           }}
+          startGameResult={gameResult}
           phoneNumber={phoneNumber}
           operator={selectedOperator}
         />

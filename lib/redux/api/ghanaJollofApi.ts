@@ -332,66 +332,46 @@ const baseQuery = async (args: any, api: any, extraOptions: any) => {
     });
 
     // Handle non-200 responses
-    // if (!result.ok) {
-    //   const errorText = await result.text();
-    //   console.error('API Error:', {
-    //     status: result.status,
-    //     statusText: result.statusText,
-    //     url: args.url,
-    //     error: errorText
-    //   });
-      
-    //   // If we get a 401 or 500, try to login again and retry once
-    //   if (result.status === 401 || result.status === 500) {
-    //     try {
-    //       // Force a new login
-    //       await auth.login();
-          
-    //       // Retry the request with the new token
-    //       const retryResult = await fetch(`${API_BASE_URL}${args.url}`, {
-    //         method: args.method || 'GET',
-    //         headers: {
-    //           'Content-Type': 'application/json',
-    //           'X-Requested-With': 'XMLHttpRequest',
-    //           'Authorization': auth.getAuthHeader()
-    //         },
-    //         body: args.body ? JSON.stringify(args.body) : undefined,
-    //       });
-          
-    //       if (!retryResult.ok) {
-    //         throw new Error(`Request failed with status ${retryResult.status}`);
-    //       }
-          
-    //       const retryData = await retryResult.json();
-    //       return { data: retryData };
-          
-    //     } catch (retryError) {
-    //       console.error('Retry failed:', retryError);
-    //       throw new Error('Failed to refresh session');
-    //     }
-    //   }
-      
-    //   throw new Error(`Request failed with status ${result.status}`);
-    // }
-
-     if (!result.ok) {
+    if (!result.ok) {
       const errorText = await result.text();
+      console.error('API Error:', {
+        status: result.status,
+        statusText: result.statusText,
+        url: args.url,
+        error: errorText
+      });
       
-      // Parse the error response
-      let errorData;
-      try {
-        errorData = errorText ? JSON.parse(errorText) : {};
-      } catch {
-        errorData = { message: errorText };
+      // If we get a 401 or 500, try to login again and retry once
+      if (result.status === 401 || result.status === 500) {
+        try {
+          // Force a new login
+          await auth.login();
+          
+          // Retry the request with the new token
+          const retryResult = await fetch(`${API_BASE_URL}${args.url}`, {
+            method: args.method || 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+              'Authorization': auth.getAuthHeader()
+            },
+            body: args.body ? JSON.stringify(args.body) : undefined,
+          });
+          
+          if (!retryResult.ok) {
+            throw new Error(`Request failed with status ${retryResult.status}`);
+          }
+          
+          const retryData = await retryResult.json();
+          return { data: retryData };
+          
+        } catch (retryError) {
+          console.error('Retry failed:', retryError);
+          throw new Error('Failed to refresh session');
+        }
       }
       
-      // Return error in RTK Query format
-      return {
-        error: {
-          status: result.status,
-          data: errorData
-        }
-      };
+      throw new Error(`Request failed with status ${result.status}`);
     }
 
     const data = await result.json();
@@ -577,7 +557,7 @@ export const ghanaJollofGameApi = createApi({
      * POST /connect/game_over_web/
      * Request will need session_id
      */
-    jollofPayment: builder.mutation<any, { session_id: string }>({
+    jollofPayment: builder.mutation<any, { number: string }>({
       query: (data) => ({
         url: '/connect/game_over_web/',
         method: 'POST',
