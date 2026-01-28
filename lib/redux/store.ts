@@ -15,6 +15,7 @@ import createWebStorage from 'redux-persist/lib/storage/createWebStorage';
 import { gameSessionSlice } from '../redux/slices/gameSessionSlice'
 import { ghanaJollofGameApi } from '../redux/api/ghanaJollofApi'
 import { trotroApi } from '../redux/api/trotroApi'
+import {goldWebApi} from '../redux/api/goldWebApi'
 
 
 const createNoopStorage = () => ({
@@ -55,6 +56,7 @@ const createNoopStorage = () => ({
       gameSession: gameSessionSlice.reducer,
       [ghanaJollofGameApi.reducerPath]: ghanaJollofGameApi.reducer,
       [trotroApi.reducerPath]: trotroApi.reducer,
+      [goldWebApi.reducerPath] : goldWebApi.reducer
     });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -71,6 +73,7 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
         }).concat(
             ghanaJollofGameApi.middleware,
             trotroApi.middleware,
+            goldWebApi.middleware
         ),
     });
   

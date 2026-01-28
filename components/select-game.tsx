@@ -6,6 +6,7 @@ import { X, Play } from "lucide-react"
 import { USSDGameFlow } from "./ussd-game-flow"
 import { useStartPlayingMutation } from '@/lib/redux/api/ghanaJollofApi';
 import { useStartPlayingMutation as useTrotroStartPlayingMutation } from '@/lib/redux/api/trotroApi';
+import {useStartPlayingMutation as useGoldWebStartPlayingMutations} from "@/lib/redux/api/goldWebApi"
 export function SelectGame() {
   const [showPlayModal, setShowPlayModal] = useState(false)
   const [showGameFlow, setShowGameFlow] = useState(false)
@@ -16,6 +17,7 @@ export function SelectGame() {
   const [gameResult, setGameResult] = useState<any>(null)
    const [startPlaying, { isLoading }] = useStartPlayingMutation();
    const [trotroStartPlaying, { isLoading: trotroLoading }] = useTrotroStartPlayingMutation();
+   const [goldWebStartPlaying, {isLoading: goldloading}] = useGoldWebStartPlayingMutations();
   
 
   const games = [
@@ -73,6 +75,10 @@ export function SelectGame() {
       // For Trotro game, show the USSD flow
       setShowPlayModal(true);
       return;
+    }else if (game.name === "Gold Mine"){
+      // For Gold Mine game, show the USSD flow
+      setShowPlayModal(true);
+      return;
     }
     
     // For other games, show the USSD flow
@@ -109,6 +115,20 @@ const handleStartGame = async () => {
       // Call the startPlaying mutation
       const result = await trotroStartPlaying({
         game_name: process.env.NEXT_PUBLIC_TROTROWEB || "WEBTROTRO",
+        phone_number: phoneNumber.replace(/\D/g, ''), // Remove any non-numeric characters
+        network: selectedOperator.toUpperCase() // Ensure uppercase to match API expectations
+      }).unwrap();
+
+      setGameResult(result);
+      
+      // Close the modal and show success or navigate to game
+      setShowPlayModal(false);
+      setShowGameFlow(true);
+      // Optionally show success message or navigate to game screen
+    }else if(selectedGame?.name === "Gold Mine"){
+      // Call the startPlaying mutation
+      const result = await goldWebStartPlaying({
+        game_name: process.env.NEXT_PUBLIC_GOLDWEB || "WEBGOLD",
         phone_number: phoneNumber.replace(/\D/g, ''), // Remove any non-numeric characters
         network: selectedOperator.toUpperCase() // Ensure uppercase to match API expectations
       }).unwrap();
