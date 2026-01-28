@@ -73,6 +73,22 @@ export interface ConfirmPaymentRequest {
   session_id: string;       // Session ID
 }
 
+interface SubmitTrotroPaymentResponse {
+  number: string;
+  amount: number;
+  Winning_message: string;
+  game_name: string;
+  network: string;
+  session: string;
+}
+interface SubmitTrotroPaymentRequest {
+  amount: number;
+  number: string;
+  network: string;
+  game_name: string;
+  session_id: string;
+}
+
 // Secure storage utility
 // In trotroApi.ts, update the secureStorage implementation
 const secureStorage = {
@@ -439,13 +455,32 @@ playTrotro: builder.mutation<PlayTrotroResponse, PlayTrotroRequest>({
 }),
 
     // Submit amount
-    submitAmount: builder.mutation<any, SubmitAmountRequest>({
-      query: (data) => ({
-        url: '/connect/trotro_amount_web/',
-        method: 'POST',
-        body: data,
-      }),
-    }),
+    submitTrotroPayment: builder.mutation<SubmitTrotroPaymentResponse, SubmitTrotroPaymentRequest>({
+  query: (data) => ({
+    url: '/connect/trotro/payment/',
+    method: 'POST',
+    body: data,
+  }),
+  async onQueryStarted(_, { queryFulfilled, dispatch }) {
+    try {
+      const { data } = await queryFulfilled;
+      // Store the payment response if needed
+      if (typeof window !== 'undefined' && data) {
+        secureStorage.setSession('trotro_payment_response', JSON.stringify(data));
+      }
+    } catch (error) {
+      console.error('Error in submitTrotroPayment:', error);
+    }
+  },
+  transformResponse: (response: SubmitTrotroPaymentResponse) => {
+    if (typeof window !== 'undefined' && response) {
+      // Store individual fields for easy access
+      secureStorage.setSession('trotro_payment_amount', response.amount.toString());
+      secureStorage.setSession('trotro_winning_message', response.Winning_message);
+    }
+    return response;
+  },
+}),
 
     // Confirm payment
     confirmPayment: builder.mutation<any, ConfirmPaymentRequest>({
@@ -471,7 +506,7 @@ playTrotro: builder.mutation<PlayTrotroResponse, PlayTrotroRequest>({
 export const {
   useStartPlayingMutation,
   usePlayTrotroMutation,
-  useSubmitAmountMutation,
+  useSubmitTrotroPaymentMutation,
   useConfirmPaymentMutation,
   useGetGameResultQuery,
   useLoginMutation,

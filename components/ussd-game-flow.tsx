@@ -9,6 +9,7 @@ import { useJollofAmountWebMutation, useStartMissionMutation, useJollofPaymentMu
 import { secureStorage } from '@/lib/redux/api/ghanaJollofApi';
 import {  trotroSecureStorage } from '@/lib/redux/api/trotroApi';
 import { usePlayTrotroMutation } from '@/lib/redux/api/trotroApi';
+import { useSubmitTrotroPaymentMutation } from '@/lib/redux/api/trotroApi';
 import { toast } from 'sonner';
 
 interface USSDGameFlowProps {
@@ -48,6 +49,7 @@ export function USSDGameFlow({ game, onClose, onComplete, startGameResult, phone
 const isPaymentLoading = paymentStatus === 'processing';
 const [triggerJollofPayment] = useJollofPaymentMutation();
 const [playTrotro, { isLoading: isPlayingTrotro }] = usePlayTrotroMutation();
+const [submitTrotroPayment, { isLoading: isPaymentLoadingTroTro }] = useSubmitTrotroPaymentMutation();
 const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
 
@@ -119,7 +121,9 @@ useEffect(() => {
             type: 'number',
             placeholder: 'Enter amount',
             min: 1,
-            max: 1000
+            max: 1000,
+            
+
           }
         },
         {
@@ -244,19 +248,30 @@ useEffect(() => {
             placeholder: 'Enter amount',
             min: 1,
             max: 1000
-          }
+          },
+          
         },
-        {
-          title: 'CONFIRM PAYMENT',
-          message: (amount: number, multiplier = 1) => 
-            `Confirm you want to play with GHS${amount}\n` +
-            `Potential win is GHS${amount * multiplier}\n` +
-            'You will receive a prompt to approve payment or check approval if you don\'t get prompt.',
-          options: [
-            { text: 'CONFIRM', value: 1 },
-            { text: 'CANCEL', value: 2 }
-          ]
-        },
+       {
+  title: 'CONFIRM PAYMENT',
+  message: (amount: number, multiplier = 1) => {
+    const winningMessage = trotroSecureStorage.getSession('trotro_winning_message');
+    return winningMessage || (
+      `Confirm you want to play with GHS${amount}\n` +
+      `Potential win is GHS${amount * multiplier}\n` +
+      'You will receive a prompt to approve payment or check approval if you don\'t get prompt.\n' +
+      'Check SMS for result upon successful payment.'
+    );
+  },
+  options: [
+    { 
+      text: isPaymentLoading ? 'PROCESSING...' : 'CONFIRM', 
+      value: 1,
+      // onClick: () => handleTrotroPayment(amount as any),  // We'll create this function next
+      disabled: isPaymentLoading
+    },
+    { text: 'CANCEL', value: 2 }
+  ]
+},
         {
           title: 'ENTER PIN',
           message: (amount: number, multiplier = 1) => 
@@ -462,6 +477,49 @@ const handleConfirm = async () => {
     setPaymentStatus('error');
     setTimeout(() => setPaymentStatus('idle'), 3000);
     setIsWaitingForResult(false);
+  }
+};
+
+const handleTrotroAmountSubmit  = async (amount: number) => {
+  try {
+    setIsProcessing(true);
+    
+    // Get the required data from secure storage
+    const number = trotroSecureStorage.getSession('trotro_number');
+    const network = trotroSecureStorage.getSession('trotro_network');
+    const gameName = trotroSecureStorage.getSession('trotro_game_name');
+    const sessionId = trotroSecureStorage.getSession('trotro_session_id');
+
+    if (!number || !network || !gameName || !sessionId) {
+      throw new Error('Missing required payment information. Please start over.');
+    }
+
+    const result = await submitTrotroPayment({
+      amount,
+      number,
+      network,
+      game_name: gameName,
+      session_id: sessionId
+    }).unwrap();
+
+    // Store the winning message for display
+    if (result.Winning_message) {
+      trotroSecureStorage.setSession('trotro_winning_message', result.Winning_message);
+    }
+
+    // Move to the next step or show success
+    setCurrentStep(currentStep + 1);
+    toast.success('Payment request sent successfully!');
+
+  } catch (error: any) {
+    console.error('Payment error:', error);
+    const errorMsg = error?.data?.message || 'Failed to process payment. Please try again.';
+    toast.error(errorMsg, {
+      duration: 5000,
+      position: 'top-center'
+    });
+  } finally {
+    setIsProcessing(false);
   }
 };
 
@@ -759,13 +817,19 @@ const handleTrotro = async (option: number) => {
           <form onSubmit={(e) => {
   e.preventDefault();
   if (step.title === 'CHOOSE AMOUNT') {
-    handleAmountSubmit(Number(inputValue));
+    if (step.title === 'CHOOSE AMOUNT') {
+    if (game.name === 'Ghana Jollof') {
+      handleAmountSubmit(Number(inputValue));
+    } else if (game.name === 'Trotro') {
+      handleTrotroAmountSubmit(Number(inputValue));
+    }
+  }
   } else if (step.title === 'ENTER PIN') {
     // Your existing PIN handling logic
     if (game.name === 'Ghana Jollof') {
       // Handle PIN submission for Ghana Jollof
     } else if (game.name === 'Gold Mine') {
-      handleGoldMine(Number(pin));
+    
     } else if (game.name === 'Trotro') {
       handleTrotro(Number(pin));
     }

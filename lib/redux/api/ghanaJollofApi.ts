@@ -374,6 +374,7 @@ const baseQuery = async (args: any, api: any, extraOptions: any) => {
       throw new Error(`Request failed with status ${result.status}`);
     }
 
+
     const data = await result.json();
     return { data };
   } catch (error) {
