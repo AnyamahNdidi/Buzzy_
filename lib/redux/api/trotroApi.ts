@@ -15,6 +15,22 @@ interface LoginResponse {
   Time: string;
 }
 
+interface PlayTrotroRequest {
+  mission: boolean;
+  multiplier: string;
+  number: string;
+  network: string;
+  game_name: string;
+  session_id: string;
+}
+interface PlayTrotroResponse {
+  journey: string;
+  number: string;
+  game_name: string;
+  network: string;
+  session: string;
+}
+
 export interface StartPlayingRequest {
   game_name: string;       // "TROTRO"
   phone_number: string;    // "97865665"
@@ -58,34 +74,45 @@ export interface ConfirmPaymentRequest {
 }
 
 // Secure storage utility
+// In trotroApi.ts, update the secureStorage implementation
 const secureStorage = {
   // Store in sessionStorage (cleared when browser closes)
   setSession(key: string, value: string): void {
     if (typeof window !== 'undefined') {
       try {
-        sessionStorage.setItem(`trotro_${key}`, value);
+        // Add 'trotro_' prefix to all keys
+        const prefixedKey = key.startsWith('trotro_') ? key : `trotro_${key}`;
+        sessionStorage.setItem(prefixedKey, value);  
       } catch (error) {
         console.error('Failed to store in sessionStorage:', error);
       }
     }
   },
 
-  getSession(key: string): string | null {
-    if (typeof window !== 'undefined') {
-      try {
-        return sessionStorage.getItem(`trotro_${key}`);
-      } catch (error) {
-        console.error('Failed to get from sessionStorage:', error);
-        return null;
-      }
+ getSession(key: string): string | null {
+  if (typeof window !== 'undefined') {
+    try {
+      // First try with the exact key, then with 'trotro_' prefix
+      const prefixedKey = key.startsWith('trotro_') ? key : `trotro_${key}`;
+      console.log('getSession - Looking for key:', prefixedKey);
+      const value = sessionStorage.getItem(prefixedKey);
+      console.log('getSession - Found value:', value);
+      return value;
+    } catch (error) {
+      console.error('Failed to get from sessionStorage:', error);
+      return null;
     }
-    return null;
-  },
+  }
+  return null;
+},
 
   removeSession(key: string): void {
     if (typeof window !== 'undefined') {
       try {
-        sessionStorage.removeItem(`trotro_${key}`);
+        // Remove both with and without prefix
+        const prefixedKey = key.startsWith('trotro_') ? key : `trotro_${key}`;
+        sessionStorage.removeItem(key);
+        sessionStorage.removeItem(prefixedKey);
       } catch (error) {
         console.error('Failed to remove from sessionStorage:', error);
       }
@@ -97,7 +124,8 @@ const secureStorage = {
     if (typeof window !== 'undefined') {
       try {
         const encrypted = btoa(value);
-        localStorage.setItem(`trotro_enc_${key}`, encrypted);
+        const prefixedKey = `trotro_${key}`;
+        localStorage.setItem(prefixedKey, encrypted);
       } catch (error) {
         console.error('Failed to store securely:', error);
       }
@@ -108,12 +136,12 @@ const secureStorage = {
   getSecure(key: string): string | null {
     if (typeof window !== 'undefined') {
       try {
-        const encrypted = localStorage.getItem(`trotro_enc_${key}`);
-        if (encrypted) {
-          return atob(encrypted);
-        }
+        const prefixedKey = `trotro_${key}`;
+        const encrypted = localStorage.getItem(prefixedKey);
+        return encrypted ? atob(encrypted) : null;
       } catch (error) {
         console.error('Failed to get secure data:', error);
+        return null;
       }
     }
     return null;
@@ -132,7 +160,7 @@ const secureStorage = {
 
         // Clear encrypted localStorage items
         Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('trotro_enc_')) {
+          if (key.startsWith('trotro_')) {
             localStorage.removeItem(key);
           }
         });
@@ -140,7 +168,7 @@ const secureStorage = {
         console.error('Failed to clear storage:', error);
       }
     }
-  },
+  }
 };
 
 // Authentication handler
@@ -306,7 +334,7 @@ const baseQuery = async (args: any, api: any, extraOptions: any) => {
 export const trotroApi = createApi({
   reducerPath: 'trotroApi',
   baseQuery,
-  tagTypes: ['GameSession', 'Destination', 'Payment', 'Transaction'],
+  tagTypes: ['GameSession', 'Destination', 'Payment', 'Transaction', 'TrotroPlay'],
   
   endpoints: (builder) => ({
     // Login endpoint
@@ -342,12 +370,15 @@ export const trotroApi = createApi({
   transformResponse: (response: StartPlayingResponse) => {
     // SECURE STORAGE - Save session data securely
     if (typeof window !== 'undefined' && response?.data) {
+
+        
       // Store in sessionStorage (cleared on browser close)
-      secureStorage.setSession('session_id', response.data.session);
-      secureStorage.setSession('game_number', response.data.number);
-      secureStorage.setSession('game_network', response.data.network);
-      secureStorage.setSession('game_name', response.data.game_name);
-      secureStorage.setSession('route', response.data.route);
+       secureStorage.setSession('trotro_session_id', response.data.session);
+      secureStorage.setSession('trotro_game_number', response.data.number);
+      secureStorage.setSession('trotro_game_network', response.data.network);
+      secureStorage.setSession('trotro_game_name', response.data.game_name);
+      secureStorage.setSession('trotro_route', response.data.route);
+      
       
       // Store encrypted version in localStorage as backup
       secureStorage.setSecure('session_backup', response.data.session);
@@ -371,13 +402,41 @@ export const trotroApi = createApi({
 }),
 
     // Submit destination
-    submitDestination: builder.mutation<any, SubmitDestinationRequest>({
-      query: (data) => ({
-        url: '/connect/submit_destination/',
-        method: 'POST',
-        body: data,
-      }),
-    }),
+    // Update the submitDestination mutation to playTrotro
+playTrotro: builder.mutation<PlayTrotroResponse, PlayTrotroRequest>({
+  query: (data) => ({
+    url: '/connect/trotro/play/',
+    method: 'POST',
+    body: data,
+  }),
+  transformResponse: (response: PlayTrotroResponse) => {
+    // SECURE STORAGE - Save all play session data
+    if (typeof window !== 'undefined' && response) {
+      // Store individual fields in sessionStorage
+      secureStorage.setSession('trotro_journey', response.journey);
+      secureStorage.setSession('trotro_number', response.number);
+      secureStorage.setSession('trotro_game_name', response.game_name);
+      secureStorage.setSession('trotro_network', response.network);
+      secureStorage.setSession('trotro_session', response.session);
+      
+      // Store all data together for easy retrieval
+      const playSession = {
+        journey: response.journey,
+        number: response.number,
+        game_name: response.game_name,
+        network: response.network,
+        session: response.session,
+        timestamp: Date.now(),
+      };
+      
+      // Store the complete session data as a single encrypted JSON string
+      secureStorage.setSecure('trotro_play_session', JSON.stringify(playSession));
+    }
+    
+    return response;
+  },
+  invalidatesTags: ['TrotroPlay'],
+}),
 
     // Submit amount
     submitAmount: builder.mutation<any, SubmitAmountRequest>({
@@ -411,7 +470,7 @@ export const trotroApi = createApi({
 // Export hooks for usage in functional components
 export const {
   useStartPlayingMutation,
-  useSubmitDestinationMutation,
+  usePlayTrotroMutation,
   useSubmitAmountMutation,
   useConfirmPaymentMutation,
   useGetGameResultQuery,

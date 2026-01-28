@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { X, ArrowRight } from "lucide-react"
 import { useJollofAmountWebMutation, useStartMissionMutation, useJollofPaymentMutation, useJollofGameFinishMutation } from '@/lib/redux/api/ghanaJollofApi';
 import { secureStorage } from '@/lib/redux/api/ghanaJollofApi';
+import {  trotroSecureStorage } from '@/lib/redux/api/trotroApi';
+import { usePlayTrotroMutation } from '@/lib/redux/api/trotroApi';
 import { toast } from 'sonner';
 
 interface USSDGameFlowProps {
@@ -17,6 +19,14 @@ interface USSDGameFlowProps {
   startGameResult: any;
   operator: string;
 }
+
+interface GameState {
+  location: string;
+  miningOption: number;
+  multiplier: number;
+  [key: string]: any; 
+}
+
 
 export function USSDGameFlow({ game, onClose, onComplete, startGameResult, phoneNumber, operator }: USSDGameFlowProps) {
    const [startMission] = useStartMissionMutation();
@@ -36,12 +46,13 @@ export function USSDGameFlow({ game, onClose, onComplete, startGameResult, phone
  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
 const isPaymentLoading = paymentStatus === 'processing';
 const [triggerJollofPayment] = useJollofPaymentMutation();
+const [playTrotro, { isLoading: isPlayingTrotro }] = usePlayTrotroMutation();
 const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
 
 
   
-  const [gameState, setGameState] = useState<any>({
+  const [gameState, setGameState] = useState<GameState>({
     location: '',
     miningOption: 0,
     multiplier: 1
@@ -209,11 +220,11 @@ useEffect(() => {
           title: 'SELECT MULTIPLIER',
           message: 'Select your multiplier',
           options: [
-            { text: '2X', value: 2 },
-            { text: '5X', value: 5 },
-            { text: '10X', value: 10 },
-            { text: '15X', value: 15 },
-            { text: '20X', value: 20 }
+            { text: '2x', value: 2 },
+            { text: '5x', value: 5 },
+            { text: '10x', value: 10 },
+            { text: '15x', value: 15 },
+            { text: '20x', value: 20 }
           ]
         },
         {
@@ -530,33 +541,81 @@ useEffect(() => {
     }
   };
 
-  const handleTrotro = (option: number) => {
-    if (currentStep === 0) {
-      if (option === 1) {
-        setCurrentStep(1);
-      } else {
-        onClose();
-      }
-    } else if (currentStep === 1) {
-      setGameState({...gameState, multiplier: option});
-      setCurrentStep(2);
-    } else if (currentStep === 2) {
-      if (option === 1) {
-        setCurrentStep(3);
-      } else {
-        onClose();
-      }
-    } else if (currentStep === 4) {
-      if (option === 1) {
-        setCurrentStep(5);
-      } else if (option === 2) {
-        setCurrentStep(3);
-        setInputValue('');
-      } else {
-        onClose();
-      }
+ 
+
+
+const handleTrotro = async (option: number) => {
+  if (currentStep === 0) {
+    if (option === 1) {
+      setCurrentStep(1);
+    } else {
+      onClose();
     }
-  };
+  } else if (currentStep === 1) {
+    // Get the selected multiplier text (e.g., "2X", "5X")
+    const selectedMultiplierOption = currentGame?.steps?.[currentStep]?.options?.find(
+      (opt: any) => opt.value === option
+    );
+    const multiplierText = selectedMultiplierOption?.text || '2X';
+    
+    try {
+      // Debug: Log all session storage items
+      console.log('All session storage items:');
+      Object.keys(sessionStorage).forEach(key => {
+        console.log(`${key}:`, sessionStorage.getItem(key));
+      });
+     console.log('Direct sessionStorage access:', {
+  trotro_session_id: sessionStorage.getItem('trotro_session_id'),
+  trotro_game_number: sessionStorage.getItem('trotro_game_number'),
+  trotro_game_network: sessionStorage.getItem('trotro_game_network'),
+  trotro_game_name: sessionStorage.getItem('trotro_game_name')
+});
+      // Get the required session data
+     const sessionId = trotroSecureStorage.getSession('trotro_session_id');
+const gameNumber = trotroSecureStorage.getSession('trotro_game_number');
+const gameNetwork = trotroSecureStorage.getSession('trotro_game_network');
+const gameName = trotroSecureStorage.getSession('trotro_game_name');
+      
+      console.log("Session data from storage:", {
+        sessionId,
+        gameNumber,
+        gameNetwork,
+        gameName
+      });
+      if (!sessionId || !gameNumber || !gameNetwork || !gameName) {
+        throw new Error('Session data is missing. Please start over.');
+      }
+      // Call the playTrotro API
+      const result = await playTrotro({
+        mission: true,
+        multiplier: multiplierText, // e.g., "2X"
+        number: gameNumber,
+        network: gameNetwork,
+        game_name: gameName,
+        session_id: sessionId
+      }).unwrap();
+      // Store the response data
+      secureStorage.setSession('trotro_journey', result.journey);
+      secureStorage.setSession('trotro_number', result.number)
+      secureStorage.setSession('trotro_game_name', result.game_name)
+      secureStorage.setSession('trotro_network', result.network)
+      secureStorage.setSession('trotro_session', result.session)
+     
+      console.log("result:", result)
+      // Move to the next step
+      setCurrentStep(2);
+    } catch (error) {
+      console.error('Error playing Trotro:', error);
+      toast.error('Failed to start game. Please try again.');
+    }
+  } else if (currentStep === 2) {
+    if (option === 1) {
+      setCurrentStep(3);
+    } else {
+      onClose();
+    }
+  }
+};
 
   const handleInputSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -636,6 +695,7 @@ useEffect(() => {
       setCurrentStep(currentGame.steps.length); // Move to result step
     }, 1500);
   };
+
 
   const renderStep = () => {
     if (isProcessing) {
