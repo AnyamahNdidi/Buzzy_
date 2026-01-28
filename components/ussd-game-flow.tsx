@@ -766,7 +766,7 @@ useEffect(() => {
                 className="w-full justify-start"
                  onClick={option.onClick || (() => handleOptionSelect(option.value))}
               >
-                {option.value}. {option.text}
+                {option.text}
               </Button>
             ))}
           </div>
