@@ -12,6 +12,7 @@ export function SelectGame() {
   const [showGameFlow, setShowGameFlow] = useState(false)
   const [selectedGame, setSelectedGame] = useState<any>(null)
   const [phoneNumber, setPhoneNumber] = useState("")
+  const [gameResultGold, setGameResultGold] = useState<any>(null)
   const [amount, setAmount] = useState("")
   const [selectedOperator, setSelectedOperator] = useState("")
   const [gameResult, setGameResult] = useState<any>(null)
@@ -133,7 +134,7 @@ const handleStartGame = async () => {
         network: selectedOperator.toUpperCase() // Ensure uppercase to match API expectations
       }).unwrap();
 
-      setGameResult(result);
+      setGameResultGold(result);
       
       // Close the modal and show success or navigate to game
       setShowPlayModal(false);
@@ -271,6 +272,7 @@ const handleStartGame = async () => {
             setShowGameFlow(false)
           }}
           startGameResult={gameResult}
+          goldResult={gameResultGold}
           phoneNumber={phoneNumber}
           operator={selectedOperator}
         />

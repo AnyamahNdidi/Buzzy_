@@ -10,6 +10,7 @@ import { secureStorage } from '@/lib/redux/api/ghanaJollofApi';
 import {  trotroSecureStorage } from '@/lib/redux/api/trotroApi';
 import { usePlayTrotroMutation } from '@/lib/redux/api/trotroApi';
 import { useSubmitTrotroPaymentMutation } from '@/lib/redux/api/trotroApi';
+import { goldSecureStorage } from '@/lib/redux/api/goldWebApi';
 import { toast } from 'sonner';
 
 interface USSDGameFlowProps {
@@ -19,6 +20,7 @@ interface USSDGameFlowProps {
   phoneNumber: string;
   startGameResult: any;
   operator: string;
+  goldResult: any;
 }
 
 interface GameState {
@@ -29,7 +31,7 @@ interface GameState {
 }
 
 
-export function USSDGameFlow({ game, onClose, onComplete, startGameResult, phoneNumber, operator }: USSDGameFlowProps) {
+export function USSDGameFlow({ game, onClose, onComplete, startGameResult, goldResult, phoneNumber, operator }: USSDGameFlowProps) {
    const [startMission] = useStartMissionMutation();
    const [jollofAmountWeb] = useJollofAmountWebMutation();
    const [jollofGameFinish] = useJollofGameFinishMutation();
@@ -51,6 +53,8 @@ const [triggerJollofPayment] = useJollofPaymentMutation();
 const [playTrotro, { isLoading: isPlayingTrotro }] = usePlayTrotroMutation();
 const [submitTrotroPayment, { isLoading: isPaymentLoadingTroTro }] = useSubmitTrotroPaymentMutation();
 const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+console.log('goldResult', goldResult);
 
 
 
@@ -158,12 +162,17 @@ useEffect(() => {
         {
           title: 'GOLD HUNTING',
           message: 'Choose where to start your gold hunt',
-          options: [
-            { text: 'Sunyani Golden Gate', value: 1 },
-            { text: 'Ntronang Golden Bend', value: 2 },
-            { text: 'Mampong Hidden Hills', value: 3 },
-            { text: 'Damongo Golden Valley', value: 4 }
-          ]
+           options: goldResult?.data?.site 
+          ? Object.entries(goldResult.data.site).map(([value, text]) => ({
+              text: text as string,
+              value: parseInt(value)
+            }))
+          : [
+              { text: 'Sunyani Golden Gate', value: 1 },
+              { text: 'Ntronang Golden Bend', value: 2 },
+              { text: 'Mampong Hidden Hills', value: 3 },
+              { text: 'Damongo Golden Valley', value: 4 }
+            ]
         },
         {
           title: 'MINING OPTIONS',
@@ -600,6 +609,38 @@ useEffect(() => {
     }
   };
 
+  const handleGoldLocationSelect = async (option: number) => {
+  try {
+    // Get the selected site name from goldResult
+    const selectedSite = goldResult?.data?.site?.[option];
+    if (!selectedSite) {
+      throw new Error('Selected location not found');
+    }
+
+    // Store the selected location in secure storage
+    goldSecureStorage.setSession('gold_location_id', option.toString());
+    goldSecureStorage.setSession('gold_location_name', selectedSite);
+    
+    // Also store in the game state for reference
+    setGameState(prev => ({
+      ...prev,
+      location: selectedSite,
+      locationId: option.toString()
+    }));
+
+    console.log('Selected gold location:', {
+      locationId: option,
+      locationName: selectedSite
+    });
+
+    // Move to next step
+    setCurrentStep(1);
+  } catch (error) {
+    console.error('Error selecting gold location:', error);
+    toast.error('Failed to select location. Please try again.');
+  }
+};
+
  
 
 
@@ -880,7 +921,14 @@ const handleTrotro = async (option: number) => {
                 key={option.value}
                 variant="outline"
                 className="w-full justify-start"
-                 onClick={option.onClick || (() => handleOptionSelect(option.value))}
+                //  onClick={option.onClick || (() => handleOptionSelect(option.value))}
+                 onClick={() => {
+    if (game.name === 'Gold Mine' && currentStep === 0) {
+      handleGoldLocationSelect(option.value);
+    } else {
+      handleOptionSelect(option.value);
+    }
+  }}
               >
                 {option.text}
               </Button>
