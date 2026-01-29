@@ -34,18 +34,22 @@ export interface StartGoldResponse {
   };
 }
 export interface SubmitMultiplierRequest {
-  location: string;        // Selected mining location
-  number: string;          // From start_gold response
-  network: string;         // From start_gold response
-  game_name: string;       // "GOLD"
-  session_id: string;      // Session ID from start_gold
+  multiplier: string;          // e.g., "Quick mining"
+  gold_site_picked: string;    // Selected gold site name
+  number: string;              // Phone number
+  network: string;             // Network provider
+  session_id: string;          // Session ID
+}
+export interface SubmitMultiplierResponse {
+  number: string;
+  game_name: string;
+  network: string;
+  session: string;
 }
 
 export interface SubmitGoldPaymentRequest {
   amount: number;          // Payment amount
   number: string;          // User's phone number
-  location: string;        // Selected location
-  multiplier: string;      // Selected multiplier (e.g., "2X", "5X")
   network: string;         // Network provider
   game_name: string;       // "GOLD"
   session_id: string;      // Session ID
@@ -107,6 +111,21 @@ const goldSecureStorage = {
         console.error('Failed to store securely:', error);
       }
     }
+  },
+
+   // Get and decrypt sensitive data
+  getSecure(key: string): string | null {
+    if (typeof window !== 'undefined') {
+      try {
+        const encrypted = localStorage.getItem(`gold_${key}`);
+        if (encrypted) {
+          return atob(encrypted); // Decrypt
+        }
+      } catch (error) {
+        console.error('Failed to get secure data:', error);
+      }
+    }
+    return null;
   },
 
 };
@@ -313,40 +332,97 @@ export const goldWebApi = createApi({
 }),
 
     // Submit Multiplier
-    submitMultiplier: builder.mutation<any, SubmitMultiplierRequest>({
-      query: (data) => ({
-        url: '/connect/gold/web/multiplier/',
-        method: 'POST',
-        body: data,
-      }),
-      async onQueryStarted(_, { queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          // Handle response if needed
-        } catch (error) {
-          console.error('Error in submitMultiplier:', error);
-        }
-      }
-    }),
+   submitMultiplier: builder.mutation<SubmitMultiplierResponse, SubmitMultiplierRequest>({
+  query: (data) => ({
+    url: '/connect/gold/web/multiplier/',
+    method: 'POST',
+    body: {
+      mission: true,
+      multiplier: data.multiplier,
+      gold_site_picked: data.gold_site_picked,
+      number: data.number,
+      network: data.network,
+      game_name: 'GOLDWEB', // Ensure consistent game name
+      session_id: data.session_id
+    },
+  }),
+  transformResponse: (response: SubmitMultiplierResponse) => {
+    if (typeof window !== 'undefined' && response) {
+      // Update session data with the latest values
+      goldSecureStorage.setSession('gold_number', response.number);
+      goldSecureStorage.setSession('gold_network', response.network);
+      goldSecureStorage.setSession('gold_game_name', response.game_name);
+      goldSecureStorage.setSession('gold_session_id', response.session);
+      
+      // Update the full session in secure storage
+      const fullSession = {
+        ...JSON.parse(goldSecureStorage.getSecure('gold_full_session') || '{}'),
+        number: response.number,
+        network: response.network,
+        game_name: response.game_name,
+        session_id: response.session,
+        last_updated: Date.now()
+      };
+      
+      goldSecureStorage.setSecure('gold_full_session', JSON.stringify(fullSession));
+    }
+    return response;
+  },
+  async onQueryStarted(_, { queryFulfilled }) {
+    try {
+      const { data } = await queryFulfilled;
+      console.log('Multiplier submitted successfully:', data);
+    } catch (error) {
+      console.error('Error in submitMultiplier:', error);
+    }
+  }
+}),
 
     // Submit Payment
     submitGoldPayment: builder.mutation<SubmitGoldPaymentResponse, SubmitGoldPaymentRequest>({
-      query: (data) => ({
-        url: '/connect/gold/web/payment/',
-        method: 'POST',
-        body: data,
-      }),
-      async onQueryStarted(_, { queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          if (data?.Winning_message) {
-            goldSecureStorage.setSession('gold_winning_message', data.Winning_message);
-          }
-        } catch (error) {
-          console.error('Error in submitGoldPayment:', error);
-        }
+  query: (data) => ({
+    url: '/connect/gold/web/payment/',
+    method: 'POST',
+    body:data
+  }),
+  transformResponse: (response: SubmitGoldPaymentResponse) => {
+    if (typeof window !== 'undefined' && response) {
+      // Store the winning message
+      if (response.Winning_message) {
+        goldSecureStorage.setSession('gold_winning_message', response.Winning_message);
       }
-    }),
+      
+      // Update session data
+      goldSecureStorage.setSession('gold_number', response.number);
+      goldSecureStorage.setSession('gold_network', response.network);
+      goldSecureStorage.setSession('gold_game_name', response.game_name);
+      goldSecureStorage.setSession('gold_session_id', response.session);
+      
+      // Update the full session in secure storage
+      const fullSession = {
+        ...JSON.parse(goldSecureStorage.getSecure('gold_full_session') || '{}'),
+        number: response.number,
+        network: response.network,
+        game_name: response.game_name,
+        session_id: response.session,
+        last_updated: Date.now(),
+        amount: response.amount,
+        winning_message: response.Winning_message
+      };
+      
+      goldSecureStorage.setSecure('gold_full_session', JSON.stringify(fullSession));
+    }
+    return response;
+  },
+  async onQueryStarted(_, { queryFulfilled }) {
+    try {
+      const { data } = await queryFulfilled;
+      console.log('Payment submitted successfully:', data);
+    } catch (error) {
+      console.error('Error in submitGoldPayment:', error);
+    }
+  }
+}),
   }),
 });
 

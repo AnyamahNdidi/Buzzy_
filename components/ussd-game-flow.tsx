@@ -10,7 +10,8 @@ import { secureStorage } from '@/lib/redux/api/ghanaJollofApi';
 import {  trotroSecureStorage } from '@/lib/redux/api/trotroApi';
 import { usePlayTrotroMutation } from '@/lib/redux/api/trotroApi';
 import { useSubmitTrotroPaymentMutation } from '@/lib/redux/api/trotroApi';
-import { goldSecureStorage } from '@/lib/redux/api/goldWebApi';
+import { goldSecureStorage, useSubmitMultiplierMutation, useSubmitGoldPaymentMutation  } from '@/lib/redux/api/goldWebApi';
+import { useConfirmPaymentMutation, useGameOverWebMutation  } from '@/lib/redux/api/gameAccessWebApi';
 import { toast } from 'sonner';
 
 interface USSDGameFlowProps {
@@ -52,7 +53,11 @@ const isPaymentLoading = paymentStatus === 'processing';
 const [triggerJollofPayment] = useJollofPaymentMutation();
 const [playTrotro, { isLoading: isPlayingTrotro }] = usePlayTrotroMutation();
 const [submitTrotroPayment, { isLoading: isPaymentLoadingTroTro }] = useSubmitTrotroPaymentMutation();
+const [submitMultiplier, { isLoading: isSubmittingMultiplier }] = useSubmitMultiplierMutation();
+const [submitGoldPayment, { isLoading: isSubmittingPayment }] = useSubmitGoldPaymentMutation();
 const pollingRef = useRef<NodeJS.Timeout | null>(null);
+const [confirmPayment, { isLoading: isConfirmingPayment }] = useConfirmPaymentMutation();
+const [gameOverWeb] = useGameOverWebMutation();
 
 console.log('goldResult', goldResult);
 
@@ -141,14 +146,18 @@ useEffect(() => {
             );
           },
           options: [
-            { 
+    { 
       text: isPaymentLoading ? 'PROCESSING...' : 'CONFIRM', 
       value: 1,
-      onClick: () => handleConfirm(),  // Connect to handleConfirm
+      onClick: (e: React.MouseEvent) => {
+        console.log('Confirm button clicked'); // Debug log
+        e.preventDefault(); // Prevent default form submission
+        handlePaymentConfirmation(parseFloat(amount));
+      },
       disabled: isPaymentLoading
     },
-            { text: 'CANCEL', value: 2 }
-          ]
+    { text: 'CANCEL', value: 2 }
+  ]
         },
          {
         title: 'PROCESSING',
@@ -178,12 +187,12 @@ useEffect(() => {
           title: 'MINING OPTIONS',
           message: 'Choose your gold mining option',
           options: [
-            { text: 'Quick mining', value: 1 },
-            { text: 'Mine 2 Gold Coins', value: 2 },
-            { text: 'Mine 5 Gold Coins', value: 3 },
-            { text: 'Mine 10 Gold Coins', value: 4 },
-            { text: 'Mine 20 Gold Coins', value: 5 }
-          ]
+        { text: isSubmittingMultiplier ? 'Processing...' : 'Quick mining', value: 1, disabled: isSubmittingMultiplier },
+        { text: isSubmittingMultiplier ? 'Processing...' : 'Mine 2 Gold Coins', value: 2, disabled: isSubmittingMultiplier },
+        { text: isSubmittingMultiplier ? 'Processing...' : 'Mine 5 Gold Coins', value: 3, disabled: isSubmittingMultiplier },
+        { text: isSubmittingMultiplier ? 'Processing...' : 'Mine 10 Gold Coins', value: 4, disabled: isSubmittingMultiplier },
+        { text: isSubmittingMultiplier ? 'Processing...' : 'Mine 20 Gold Coins', value: 5, disabled: isSubmittingMultiplier }
+      ]
         },
         {
           title: 'CHOOSE AMOUNT',
@@ -197,14 +206,28 @@ useEffect(() => {
         },
         {
           title: 'CONFIRM PAYMENT',
-          message: (amount: number) => 
-            `Confirm you want to play with GHS${amount}\n` +
-            'You will receive a prompt to approve payment or check approval if you don\'t get prompt.\n' +
-            'Check SMS for result upon successful payment.',
-          options: [
-            { text: 'CONFIRM', value: 1 },
-            { text: 'CANCEL', value: 2 }
-          ]
+       message: (amount: number, multiplier = 1) => {
+    const winningMessage = goldSecureStorage.getSession('gold_winning_message');
+    return winningMessage || (
+      `Confirm you want to play with GHS${amount}\n` +
+      `Potential win is GHS${amount * multiplier}\n` +
+      'You will receive a prompt to approve payment or check approval if you don\'t get prompt.\n' +
+      'Check SMS for result upon successful payment.'
+    );
+  },
+         options: [
+    { 
+      text: isPaymentLoading ? 'PROCESSING...' : 'CONFIRM', 
+      value: 1,
+      onClick: (e: React.MouseEvent) => {
+        console.log('Confirm button clicked'); // Debug log
+        e.preventDefault(); // Prevent default form submission
+        handlePaymentConfirmation(parseFloat(amount));
+      },
+      disabled: isPaymentLoading
+    },
+    { text: 'CANCEL', value: 2 }
+  ]
         },
         {
           title: 'ENTER PIN',
@@ -271,11 +294,15 @@ useEffect(() => {
       'Check SMS for result upon successful payment.'
     );
   },
-  options: [
+options: [
     { 
       text: isPaymentLoading ? 'PROCESSING...' : 'CONFIRM', 
       value: 1,
-      // onClick: () => handleTrotroPayment(amount as any),  // We'll create this function next
+      onClick: (e: React.MouseEvent) => {
+        console.log('Confirm button clicked'); // Debug log
+        e.preventDefault(); // Prevent default form submission
+        handlePaymentConfirmation(parseFloat(amount));
+      },
       disabled: isPaymentLoading
     },
     { text: 'CANCEL', value: 2 }
@@ -418,76 +445,165 @@ const handleAmountSubmit = async (amount: number) => {
   }
 };
 
-const handleConfirm = async () => {
+const handlePaymentConfirmation = async (amount: number) => {
   if (isPaymentLoading) return;
   
   setPaymentStatus('processing');
+  setIsWaitingForResult(true);
   
   try {
+    // Get data based on the current game
+    let number, network, sessionId, gameName;
+    
+    switch(game.name) {
+      case 'Gold Mine':
+        number = goldSecureStorage.getSession('gold_number');
+        network = goldSecureStorage.getSession('gold_network');
+        sessionId = goldSecureStorage.getSession('gold_session_id');
+        gameName = 'GOLDWEB';
+        break;
+      case 'Trotro':
+        number = trotroSecureStorage.getSession('trotro_number');
+        network = trotroSecureStorage.getSession('trotro_network');
+        sessionId = trotroSecureStorage.getSession('trotro_session_id');
+        gameName = 'TROTRO';
+        break;
+      case 'Ghana Jollof':
+      default:
+        number = secureStorage.getSession('number');
+        network = secureStorage.getSession('network');
+        sessionId = secureStorage.getSession('session_id');
+        gameName = 'GHANA_JOLLOF';
+    }
+
+    if (!number || !network || !sessionId) {
+      throw new Error('Missing required payment information. Please start over.');
+    }
+
     // Generate a unique transaction ID
     const transactionId = `tx_${Date.now()}`;
-    
-    // Store transaction ID for reference
     secureStorage.setSession('current_transaction_id', transactionId);
-    
-    // Prepare payment data
+
+    // Prepare and send payment data
     const paymentData = {
       confirmed: true,
-      amount: parseFloat(secureStorage.getSession('current_amount') || '0'),
-      number: secureStorage.getSession('current_number') || '',
-      network: secureStorage.getSession('current_network') || 'MTN',
-      game_name: secureStorage.getSession('current_game_name') || 'WEBJOLLOF',
-      session_id: secureStorage.getSession('current_session') || ''
+      amount,
+      number,
+      network,
+      game_name: gameName,
+      session_id: sessionId
     };
+
     // Show waiting state
     setIsWaitingForResult(true);
     
-  
     // Send payment request
-    const result = await triggerJollofPayment(paymentData).unwrap();
-    // console.log('Payment initiated:', result);before we trigger 
-
-     // Move to the waiting step
-    setCurrentStep(prev => prev + 1);
+    const result = await confirmPayment(paymentData).unwrap();
     
-    setIsWaitingForResult(true);
-
-    startPollingGameStatus();    
-    
-    
-  } catch (error:any) {
-    console.error('Payment failed:', error);
-     let errorMsg = 'Payment failed. Please try again.';
-    
-    // Check the error structure from your logs
-    if (error?.data?.message) {
-      // Direct message from API
-      errorMsg = error.data.message;
-    } else if (error?.data?.error) {
-      // Error might be in error.data.error (stringified JSON)
-      try {
-        const parsedError = JSON.parse(error.data.error);
-        if (parsedError.message) {
-          errorMsg = parsedError.message;
-        }
-      } catch {
-        // If it's not JSON, use it as is
-        errorMsg = error.data.error;
+    // Store the winning message if it exists
+    if (result.Winning_message) {
+      if (game.name === 'Gold Mine') {
+        goldSecureStorage.setSession('gold_winning_message', result.Winning_message);
+      } else if (game.name === 'Trotro') {
+        trotroSecureStorage.setSession('trotro_winning_message', result.Winning_message);
       }
-    } else if (error?.error) {
-      // Error from RTK Query
-      errorMsg = error.error;
     }
+
+    // Move to the waiting step and start polling
+    setCurrentStep(prev => prev + 1);
+    setIsWaitingForResult(true);
+    startPollingGameStatus();
     
-    toast.error(errorMsg, {
-      duration: 5000,
-      position: 'top-center'
+    return result;
+    
+  } catch (error: any) {
+    console.error('Payment confirmation failed:', error);
+    const errorMsg = error?.data?.message || error.message || 'Failed to process payment';
+    
+    setGameResult({
+      status: 'error',
+      message: errorMsg
     });
+    setShowResultModal(true);
     setPaymentStatus('error');
     setTimeout(() => setPaymentStatus('idle'), 3000);
+    
+    throw error;
+  } finally {
     setIsWaitingForResult(false);
   }
 };
+
+// const handleConfirm = async () => {
+//   if (isPaymentLoading) return;
+  
+//   setPaymentStatus('processing');
+  
+//   try {
+//     // Generate a unique transaction ID
+//     const transactionId = `tx_${Date.now()}`;
+    
+//     // Store transaction ID for reference
+//     secureStorage.setSession('current_transaction_id', transactionId);
+    
+//     // Prepare payment data
+//     const paymentData = {
+//       confirmed: true,
+//       amount: parseFloat(secureStorage.getSession('current_amount') || '0'),
+//       number: secureStorage.getSession('current_number') || '',
+//       network: secureStorage.getSession('current_network') || 'MTN',
+//       game_name: secureStorage.getSession('current_game_name') || 'WEBJOLLOF',
+//       session_id: secureStorage.getSession('current_session') || ''
+//     };
+//     // Show waiting state
+//     setIsWaitingForResult(true);
+    
+  
+//     // Send payment request
+//     const result = await triggerJollofPayment(paymentData).unwrap();
+//     // console.log('Payment initiated:', result);before we trigger 
+
+//      // Move to the waiting step
+//     setCurrentStep(prev => prev + 1);
+    
+//     setIsWaitingForResult(true);
+
+//     startPollingGameStatus();    
+    
+    
+//   } catch (error:any) {
+//     console.error('Payment failed:', error);
+//      let errorMsg = 'Payment failed. Please try again.';
+    
+//     // Check the error structure from your logs
+//     if (error?.data?.message) {
+//       // Direct message from API
+//       errorMsg = error.data.message;
+//     } else if (error?.data?.error) {
+//       // Error might be in error.data.error (stringified JSON)
+//       try {
+//         const parsedError = JSON.parse(error.data.error);
+//         if (parsedError.message) {
+//           errorMsg = parsedError.message;
+//         }
+//       } catch {
+//         // If it's not JSON, use it as is
+//         errorMsg = error.data.error;
+//       }
+//     } else if (error?.error) {
+//       // Error from RTK Query
+//       errorMsg = error.error;
+//     }
+    
+//     toast.error(errorMsg, {
+//       duration: 5000,
+//       position: 'top-center'
+//     });
+//     setPaymentStatus('error');
+//     setTimeout(() => setPaymentStatus('idle'), 3000);
+//     setIsWaitingForResult(false);
+//   }
+// };
 
 const handleTrotroAmountSubmit  = async (amount: number) => {
   try {
@@ -532,6 +648,49 @@ const handleTrotroAmountSubmit  = async (amount: number) => {
   }
 };
 
+const handleGoldAmountSubmit  = async (amount: number) => {
+  try {
+    setIsProcessing(true);
+    
+    // Get the required data from secure storage
+    const number = goldSecureStorage.getSession('gold_number');
+    const network = goldSecureStorage.getSession('gold_network');
+    const gameName = goldSecureStorage.getSession('gold_game_name');
+    const sessionId = goldSecureStorage.getSession('gold_session_id');
+
+    if (!number || !network || !gameName || !sessionId) {
+      throw new Error('Missing required payment information. Please start over.');
+    }
+
+    const result = await submitGoldPayment({
+      amount,
+      number,
+      network,
+      game_name: gameName,
+      session_id: sessionId
+    }).unwrap();
+
+    // Store the winning message for display
+    if (result.Winning_message) {
+      goldSecureStorage.setSession('gold_winning_message', result.Winning_message);
+    }
+
+    // Move to the next step or show success
+    setCurrentStep(currentStep + 1);
+    toast.success('Payment request sent successfully!');
+
+  } catch (error: any) {
+    console.error('Payment error:', error);
+    const errorMsg = error?.data?.message || 'Failed to process payment. Please try again.';
+    toast.error(errorMsg, {
+      duration: 5000,
+      position: 'top-center'
+    });
+  } finally {
+    setIsProcessing(false);
+  }
+};
+
 const stopPolling = () => {
   if (pollingRef.current) {
     clearInterval(pollingRef.current);
@@ -539,47 +698,107 @@ const stopPolling = () => {
   }
 };
 
-const startPollingGameStatus = async () => {
-  if (pollingRef.current) return; // ⛔ prevent duplicates
+// const startPollingGameStatus = async () => {
+//   if (pollingRef.current) return; // ⛔ prevent duplicates
 
-  const number = secureStorage.getSession('current_number');
-  if (!number) {
-    console.error('No phone number found for polling');
-    const errorMsg = 'Phone number not found. Please try again.';
-    toast.error(errorMsg);
-    setGameResult({
-      status: 'error',
-      message: 'Phone number not found. Please try again.'
-    });
-    setShowResultModal(true);
-    return;
-  }
+//   const number = secureStorage.getSession('current_number');
+//   if (!number) {
+//     console.error('No phone number found for polling');
+//     const errorMsg = 'Phone number not found. Please try again.';
+//     toast.error(errorMsg);
+//     setGameResult({
+//       status: 'error',
+//       message: 'Phone number not found. Please try again.'
+//     });
+//     setShowResultModal(true);
+//     return;
+//   }
+
+//   try {
+//     // Use the jollofPayment mutation to get the game result
+//     const result = await triggerJollofPayment({ number }).unwrap();
+    
+//     // Update the UI with the result
+//     setGameResult(result);
+//     setIsWaitingForResult(false);
+//     setShowResultModal(true);
+//     setPaymentStatus('success');
+//     toast.success('Payment processed successfully!');
+
+//   } catch (error:any) {
+//     console.error('Failed to get game result:', error);
+    
+//     const errorMsg = error?.data?.message || 'Failed to process payment. Please check your SMS for confirmation.';
+//     toast.error(errorMsg);
+//     setGameResult({
+//       status: 'error',
+//       message: errorMsg
+//     });
+//     setShowResultModal(true);
+//     setPaymentStatus('error');
+//     setTimeout(() => setPaymentStatus('idle'), 3000);
+//   } finally {
+//     setIsWaitingForResult(false);
+//   }
+// };
+
+const startPollingGameStatus = async () => {
+  if (pollingRef.current) return; // Prevent duplicates
 
   try {
-    // Use the jollofPayment mutation to get the game result
-    const result = await triggerJollofPayment({ number }).unwrap();
+    // Get the appropriate data based on the current game
+    let number, sessionId;
+    
+    switch (game.name) {
+      case 'Gold Mine':
+        number = goldSecureStorage.getSession('gold_number');
+        sessionId = goldSecureStorage.getSession('gold_session_id');
+        break;
+      case 'Trotro':
+        number = trotroSecureStorage.getSession('trotro_number');
+        sessionId = trotroSecureStorage.getSession('trotro_session_id');
+        break;
+      case 'Ghana Jollof':
+      default:
+        number = secureStorage.getSession('number');
+        sessionId = secureStorage.getSession('session_id');
+    }
+
+    if (!number) {
+      throw new Error('Phone number not found. Please try again.');
+    }
+
+    // Call the gameOverWeb endpoint
+    const result = await gameOverWeb({ number }).unwrap();
     
     // Update the UI with the result
-    setGameResult(result);
+    setGameResult({
+      status: 'success',
+      message: result.message || 'Game completed successfully!'
+    });
+
+    // setGameResult(result);
     setIsWaitingForResult(false);
     setShowResultModal(true);
     setPaymentStatus('success');
-    toast.success('Payment processed successfully!');
+    toast.success('Game completed successfully!');
 
-  } catch (error:any) {
+  } catch (error: any) {
     console.error('Failed to get game result:', error);
     
-    const errorMsg = error?.data?.message || 'Failed to process payment. Please check your SMS for confirmation.';
+    const errorMsg = error?.data?.message || 'Failed to get game result. Please check your SMS for confirmation.';
     toast.error(errorMsg);
+    
     setGameResult({
       status: 'error',
       message: errorMsg
     });
+  
     setShowResultModal(true);
     setPaymentStatus('error');
-    setTimeout(() => setPaymentStatus('idle'), 3000);
   } finally {
     setIsWaitingForResult(false);
+    setTimeout(() => setPaymentStatus('idle'), 3000);
   }
 };
 
@@ -708,40 +927,49 @@ const handleTrotro = async (option: number) => {
   }
 };
 
-  const handleInputSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleMiningOptionSelect = async (option: number) => {
+  try {
+    setIsProcessing(true);
     
-    if ((currentStep === 2 && game.name !== 'Trotro') || (currentStep === 3 && game.name === 'Trotro')) {
-      const amountNum = parseInt(inputValue);
-      if (isNaN(amountNum) || amountNum < 1 || amountNum > 1000) {
-        alert('Please enter a valid amount between 1 and 1000 GHS');
-        return;
-      }
-      setAmount(inputValue);
-      setCurrentStep(game.name === 'Trotro' ? 4 : 3);
-    } 
-    else if (currentStep === 4 && game.name === 'Ghana Jollof' && pin) {
-      if (pin.length !== 4 || !/^\d+$/.test(pin)) {
-        alert('Please enter a valid 4-digit PIN');
-        return;
-      }
-      processPayment();
+    // Get the option text from the selected value
+    const optionText = gameFlows['Gold Mine']?.steps[1]?.options?.find(
+      opt => opt.value === option
+    )?.text;
+
+    if (!optionText) {
+      throw new Error('Invalid mining option selected');
     }
-    else if (currentStep === 4 && game.name === 'Gold Mine' && pin) {
-      if (pin.length !== 4 || !/^\d+$/.test(pin)) {
-        alert('Please enter a valid 4-digit PIN');
-        return;
-      }
-      processPayment();
+
+    // Get the stored session data
+    const sessionId = goldSecureStorage.getSession('gold_session_id');
+    const number = goldSecureStorage.getSession('gold_number');
+    const network = goldSecureStorage.getSession('gold_network');
+    const locationName = goldSecureStorage.getSession('gold_location_name');
+
+    if (!sessionId || !number || !network || !locationName) {
+      throw new Error('Session data is missing. Please start over.');
     }
-    else if (currentStep === 5 && game.name === 'Trotro' && pin) {
-      if (pin.length !== 4 || !/^\d+$/.test(pin)) {
-        alert('Please enter a valid 4-digit PIN');
-        return;
-      }
-      processPayment();
-    }
-  };
+
+    // Submit the multiplier
+    await submitMultiplier({
+      multiplier: optionText,
+      gold_site_picked: locationName,
+      number,
+      network,
+      session_id: sessionId
+    }).unwrap();
+
+    // If successful, move to the next step
+    setCurrentStep(2); // Move to amount selection step
+    toast.success('Mining option selected successfully!');
+
+  } catch (error) {
+    console.error('Error selecting mining option:', error);
+    toast.error('Failed to select mining option. Please try again.');
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   const processPayment = () => {
     setIsProcessing(true);
@@ -863,6 +1091,8 @@ const handleTrotro = async (option: number) => {
       handleAmountSubmit(Number(inputValue));
     } else if (game.name === 'Trotro') {
       handleTrotroAmountSubmit(Number(inputValue));
+    }else if (game.name === 'Gold Mine') {
+      handleGoldAmountSubmit(Number(inputValue));
     }
   }
   } else if (step.title === 'ENTER PIN') {
@@ -870,7 +1100,7 @@ const handleTrotro = async (option: number) => {
     if (game.name === 'Ghana Jollof') {
       // Handle PIN submission for Ghana Jollof
     } else if (game.name === 'Gold Mine') {
-    
+      // Handle PIN submission for Gold Mine
     } else if (game.name === 'Trotro') {
       handleTrotro(Number(pin));
     }
@@ -922,13 +1152,26 @@ const handleTrotro = async (option: number) => {
                 variant="outline"
                 className="w-full justify-start"
                 //  onClick={option.onClick || (() => handleOptionSelect(option.value))}
-                 onClick={() => {
-    if (game.name === 'Gold Mine' && currentStep === 0) {
-      handleGoldLocationSelect(option.value);
+              onClick={async (e) => {
+                e.preventDefault();
+    
+    // If the option has its own onClick handler, use that
+    if (option.onClick) {
+      option.onClick(e);
+      return;
+    }
+  if (game.name === 'Gold Mine') {
+    if (currentStep === 0) {
+      await handleGoldLocationSelect(option.value);
+    } else if (currentStep === 1) {
+      await handleMiningOptionSelect(option.value);
     } else {
       handleOptionSelect(option.value);
     }
-  }}
+  } else {
+    handleOptionSelect(option.value);
+  }
+}}
               >
                 {option.text}
               </Button>

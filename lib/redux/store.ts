@@ -16,6 +16,7 @@ import { gameSessionSlice } from '../redux/slices/gameSessionSlice'
 import { ghanaJollofGameApi } from '../redux/api/ghanaJollofApi'
 import { trotroApi } from '../redux/api/trotroApi'
 import {goldWebApi} from '../redux/api/goldWebApi'
+import gameAccessWebApi from "../redux/api/gameAccessWebApi"
 
 
 const createNoopStorage = () => ({
@@ -56,7 +57,8 @@ const createNoopStorage = () => ({
       gameSession: gameSessionSlice.reducer,
       [ghanaJollofGameApi.reducerPath]: ghanaJollofGameApi.reducer,
       [trotroApi.reducerPath]: trotroApi.reducer,
-      [goldWebApi.reducerPath] : goldWebApi.reducer
+      [goldWebApi.reducerPath] : goldWebApi.reducer,
+      [gameAccessWebApi.reducerPath]: gameAccessWebApi.reducer
     });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -73,7 +75,8 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
         }).concat(
             ghanaJollofGameApi.middleware,
             trotroApi.middleware,
-            goldWebApi.middleware
+            goldWebApi.middleware,
+            gameAccessWebApi.middleware
         ),
     });
   
