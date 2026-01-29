@@ -397,6 +397,7 @@ export const goldWebApi = createApi({
       goldSecureStorage.setSession('gold_network', response.network);
       goldSecureStorage.setSession('gold_game_name', response.game_name);
       goldSecureStorage.setSession('gold_session_id', response.session);
+      goldSecureStorage.setSecure('gold_amount', response.amount.toString());
       
       // Update the full session in secure storage
       const fullSession = {

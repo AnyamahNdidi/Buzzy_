@@ -101,7 +101,7 @@ const handleStartGame = async () => {
     if (selectedGame?.name === "Ghana Jollof") {
       // Call the startPlaying mutation
       const result = await startPlaying({
-        game_name: process.env.NEXT_PUBLIC_JELLOFWEB || "WEBJOLLOF", // Match the expected API value
+        game_name: process.env.NEXT_PUBLIC_JELLOFWEB || "JOLLOFWEB", // Match the expected API value
         phone_number: phoneNumber.replace(/\D/g, ''), // Remove any non-numeric characters
         network: selectedOperator.toUpperCase() // Ensure uppercase to match API expectations
       }).unwrap();
@@ -115,7 +115,7 @@ const handleStartGame = async () => {
     } else if (selectedGame?.name === "Trotro") {
       // Call the startPlaying mutation
       const result = await trotroStartPlaying({
-        game_name: process.env.NEXT_PUBLIC_TROTROWEB || "WEBTROTRO",
+        game_name: process.env.NEXT_PUBLIC_TROTROWEB || "TROTROWEB",
         phone_number: phoneNumber.replace(/\D/g, ''), // Remove any non-numeric characters
         network: selectedOperator.toUpperCase() // Ensure uppercase to match API expectations
       }).unwrap();
@@ -129,7 +129,7 @@ const handleStartGame = async () => {
     }else if(selectedGame?.name === "Gold Mine"){
       // Call the startPlaying mutation
       const result = await goldWebStartPlaying({
-        game_name: process.env.NEXT_PUBLIC_GOLDWEB || "WEBGOLD",
+        game_name: process.env.NEXT_PUBLIC_GOLDWEB || "GOLDWEB",
         phone_number: phoneNumber.replace(/\D/g, ''), // Remove any non-numeric characters
         network: selectedOperator.toUpperCase() // Ensure uppercase to match API expectations
       }).unwrap();

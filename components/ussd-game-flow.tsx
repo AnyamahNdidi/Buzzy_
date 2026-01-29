@@ -44,6 +44,7 @@ export function USSDGameFlow({ game, onClose, onComplete, startGameResult, goldR
   const [showResultModal, setShowResultModal] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [amount, setAmount] = useState('');
+  const [numericAmount, setNumericAmount] = useState<number>(0); 
   const [pin, setPin] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [gameResult, setGameResult] = useState<any>(null);
@@ -446,6 +447,12 @@ const handleAmountSubmit = async (amount: number) => {
 };
 
 const handlePaymentConfirmation = async (amount: number) => {
+  //  console.log('handlePaymentConfirmation called with amount:', amount);
+  //   if (isNaN(amount) || amount <= 0) {
+  //   console.error('Invalid amount:', amount);
+  //   toast.error('Please enter a valid amount');
+  //   return;
+  // }
   if (isPaymentLoading) return;
   
   setPaymentStatus('processing');
@@ -453,28 +460,33 @@ const handlePaymentConfirmation = async (amount: number) => {
   
   try {
     // Get data based on the current game
-    let number, network, sessionId, gameName;
+    let number, network, sessionId, gameName, gameAmount;
+    console.log('Current game:', game.name); 
     
     switch(game.name) {
       case 'Gold Mine':
         number = goldSecureStorage.getSession('gold_number');
         network = goldSecureStorage.getSession('gold_network');
         sessionId = goldSecureStorage.getSession('gold_session_id');
-        gameName = 'GOLDWEB';
+        gameName = process.env.NEXT_PUBLIC_COLDWEB || 'GOLDWEB';
+        gameAmount = goldSecureStorage.getSecure('gold_amount');
         break;
       case 'Trotro':
         number = trotroSecureStorage.getSession('trotro_number');
         network = trotroSecureStorage.getSession('trotro_network');
         sessionId = trotroSecureStorage.getSession('trotro_session_id');
-        gameName = 'TROTRO';
+        gameName = process.env.NEXT_PUBLIC_TROTROWEB || 'TROTROWEB';
+        gameAmount = trotroSecureStorage.getSecure('trotro_payment_amount');
         break;
       case 'Ghana Jollof':
       default:
-        number = secureStorage.getSession('number');
-        network = secureStorage.getSession('network');
-        sessionId = secureStorage.getSession('session_id');
-        gameName = 'GHANA_JOLLOF';
+        number = secureStorage.getSession('current_number');
+        network = secureStorage.getSession('current_game_name');
+        sessionId = secureStorage.getSession('current_session');
+        gameName = process.env.NEXT_PUBLIC_JELLOFWEB || 'GHANA_JOLLOF';
+        gameAmount = secureStorage.getSecure('current_amount');
     }
+    console.log("data passed:", number, gameAmount, network, sessionId, gameName)
 
     if (!number || !network || !sessionId) {
       throw new Error('Missing required payment information. Please start over.');
@@ -482,12 +494,12 @@ const handlePaymentConfirmation = async (amount: number) => {
 
     // Generate a unique transaction ID
     const transactionId = `tx_${Date.now()}`;
-    secureStorage.setSession('current_transaction_id', transactionId);
+    // secureStorage.setSession('current_transaction_id', transactionId);
 
     // Prepare and send payment data
     const paymentData = {
       confirmed: true,
-      amount,
+      amount: gameAmount,
       number,
       network,
       game_name: gameName,
@@ -498,7 +510,7 @@ const handlePaymentConfirmation = async (amount: number) => {
     setIsWaitingForResult(true);
     
     // Send payment request
-    const result = await confirmPayment(paymentData).unwrap();
+    const result = await confirmPayment(paymentData as any).unwrap();
     
     // Store the winning message if it exists
     if (result.Winning_message) {

@@ -533,6 +533,7 @@ export const ghanaJollofGameApi = createApi({
           secureStorage.setSession('current_game_name', response.game_name);
           secureStorage.setSession('current_network', response.network);
           secureStorage.setSession('current_session', response.session);
+          secureStorage.setSecure('current_amount', response.amount.toString());
           
           // Store the winning message for display
           if (response.Winning_message) {

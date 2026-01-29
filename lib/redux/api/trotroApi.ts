@@ -477,6 +477,7 @@ playTrotro: builder.mutation<PlayTrotroResponse, PlayTrotroRequest>({
       // Store individual fields for easy access
       secureStorage.setSession('trotro_payment_amount', response.amount.toString());
       secureStorage.setSession('trotro_winning_message', response.Winning_message);
+      secureStorage.setSecure('trotro_payment_amount', response.amount.toString());
     }
     return response;
   },
