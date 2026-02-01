@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
-import { X, Play } from "lucide-react"
+import { X, Play, Loader2,} from "lucide-react"
 import { USSDGameFlow } from "./ussd-game-flow"
 import { useStartPlayingMutation } from '@/lib/redux/api/ghanaJollofApi';
 import { useStartPlayingMutation as useTrotroStartPlayingMutation } from '@/lib/redux/api/trotroApi';
@@ -17,6 +17,7 @@ export function SelectGame() {
   const [selectedOperator, setSelectedOperator] = useState("")
   const [gameResult, setGameResult] = useState<any>(null)
    const [startPlaying, { isLoading }] = useStartPlayingMutation();
+   const [isStarting, setIsStarting] = useState(false);
    const [trotroStartPlaying, { isLoading: trotroLoading }] = useTrotroStartPlayingMutation();
    const [goldWebStartPlaying, {isLoading: goldloading}] = useGoldWebStartPlayingMutations();
   
@@ -97,6 +98,8 @@ const handleStartGame = async () => {
     return;
   }
 
+  setIsStarting(true);
+
   try {
     if (selectedGame?.name === "Ghana Jollof") {
       // Call the startPlaying mutation
@@ -150,6 +153,9 @@ const handleStartGame = async () => {
   } catch (error) {
     console.error('Error:', error);
     // Handle error (e.g., show error message to user)
+  }
+  finally {
+    setIsStarting(false);
   }
 };
 
@@ -246,14 +252,18 @@ const handleStartGame = async () => {
             </div>
 
             <div className="flex justify-center">
-              <Button
-                onClick={handleStartGame}
-                disabled={!phoneNumber || !selectedOperator}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-full px-8 py-6 text-lg font-bold shadow-lg transition-all"
-              >
-                <Play className="w-5 h-5 mr-2" />
-                Start Playing
-              </Button>
+             <Button
+  onClick={handleStartGame}
+  disabled={!phoneNumber || !selectedOperator || isStarting}
+  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-full px-8 py-6 text-lg font-bold shadow-lg transition-all flex items-center justify-center"
+>
+  {isStarting ? (
+    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+  ) : (
+    <Play className="w-5 h-5 mr-2" />
+  )}
+  {isStarting ? 'Starting...' : 'Start Playing'}
+</Button>
             </div>
           </div>
         </div>

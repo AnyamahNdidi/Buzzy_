@@ -616,7 +616,7 @@ const handlePaymentConfirmation = async (amount: number) => {
     //   }
     // }
 
-    await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+    await new Promise(resolve => setTimeout(resolve, 3000)); // 2 second delay
  
 // Then start polling for the game status
       await startPollingGameStatus();
@@ -875,13 +875,38 @@ const stopPolling = () => {
 //   }
 // };
 
-const startPollingGameStatus = async () => {
-  console.log("start checking the result");
+const startPollingGameStatus = async (retryCount = 0, maxRetries = 9) => {
+  console.log(`Checking result (attempt ${retryCount + 1} of ${maxRetries + 1})`);
   if (pollingRef.current) return;
 
   try {
+    // Show initial loading state only on first attempt
+    if (retryCount === 0) {
+      setIsWaitingForResult(true);
+      setGameResult({
+        status: 'info',
+        message: 'Please check your phone to complete the payment...'
+      });
+      setShowResultModal(true);
+    }
+
+    // Progressive delay: 5s x 9 = 45s total
+    const delay = 5000;
+    
+    // Show countdown for next check
+    if (retryCount < maxRetries) {
+      setGameResult({
+        status: 'info',
+        message: `Processing your result. Attempt ${retryCount + 1} of ${maxRetries}... result loadings`
+      });
+    }
+    
+    // Wait for the delay
+    await new Promise(resolve => setTimeout(resolve, delay));
+
     let number, sessionId;
     
+    // Get the appropriate session data based on game type
     switch (game.name) {
       case 'Gold Mine':
         number = goldSecureStorage.getSession('gold_number');
@@ -905,63 +930,93 @@ const startPollingGameStatus = async () => {
     const response = await gameOverWeb({ number }).unwrap();
     console.log("API Response:", response);
 
-    // Handle the response structure
-    const resultData = response?.message || response;
-    const status = resultData?.status?.toLowerCase() || 'error';
-    const message = resultData?.message || 'An unknown error occurred OR Network Provider Error';
-    const isSuccess = status.includes('success') || 
-                     status.includes('completed');
+    // Only process the response if we've reached the last attempt
+    if (retryCount >= maxRetries - 1) {
+      const resultData = response?.message || response;
+      
+      // If we have a message with status in the response
+      if (resultData?.message && resultData?.status) {
+        return handleFinalResponse(
+          resultData.status.toLowerCase(),
+          resultData.message
+        );
+      }
+      
+      // Check if we have a valid response with game_name and status
+      if (resultData?.game_name && resultData?.status) {
+        const status = resultData.status.toLowerCase();
+        const message = resultData.lost_message || resultData.message || 'Processing complete';
+        return handleFinalResponse(status, message);
+      }
 
-    // Update the UI with the result
-    setGameResult({
-      status: isSuccess ? 'success' : 'error',
-      message: message
-    });
+      // Final check for any error message in the response
+      if (resultData?.message) {
+        return handleFinalResponse('error', resultData.message);
+      }
 
-    setIsWaitingForResult(false);
-    setShowResultModal(true);
-    setPaymentStatus(isSuccess ? 'success' : 'error');
-    
-    // Show appropriate toast based on status
-    if (isSuccess) {
-      toast.success(message);
-    } else {
-      toast.error(message, {
-        duration: 5000, // Show for 5 seconds for error messages
-        style: {
-          background: '#FEE2E2', // Light red background
-          color: '#B91C1C', // Dark red text
-          border: '1px solid #FCA5A5' // Red border
-        }
-      });
+      throw new Error('Unable to get a final status. Please check your phone for confirmation.');
+    }
+
+    // If we get here and still have retries left, continue polling
+    if (retryCount < maxRetries - 1) {
+      return startPollingGameStatus(retryCount + 1, maxRetries);
     }
 
   } catch (error: any) {
-    console.error('Failed to get game result:', error);
+    console.error('Error in payment processing:', error);
     
-    const errorMsg = error?.data?.message?.message || 
-                    error?.message || 
-                    'Failed to get game result. Please check your SMS for confirmation.';
+    // Only process errors on the final attempt
+    if (retryCount >= maxRetries - 1) {
+      let errorMsg = 'Failed to complete payment. Please check your phone for confirmation.';
+      
+      if (error?.data?.message) {
+        if (typeof error.data.message === 'object') {
+          errorMsg = error.data.message.message || JSON.stringify(error.data.message);
+        } else {
+          errorMsg = error.data.message;
+        }
+      } else if (error?.message) {
+        errorMsg = error.message;
+      }
+      
+      return handleFinalResponse('error', errorMsg);
+    }
     
-    setGameResult({
-      status: 'error',
-      message: errorMsg
-    });
+    // If we still have retries left, continue polling
+    return startPollingGameStatus(retryCount + 1, maxRetries);
+  } finally {
+    if (retryCount >= maxRetries - 1) {
+      setIsWaitingForResult(false);
+      setShowResultModal(true);
+      setPaymentStatus('idle');
+    }
+  }
+};
+
+// Helper function to handle final responses
+const handleFinalResponse = (status: string, message: string) => {
+  const isSuccess = status === 'success' || status === 'completed';
   
-    setShowResultModal(true);
-    setPaymentStatus('error');
-    toast.error(errorMsg, {
-      duration: 5000,
+  setGameResult({
+    status: isSuccess ? 'success' : 'error',
+    message: message
+  });
+
+  // Show toast based on status
+  toast[isSuccess ? 'success' : 'error'](message, {
+    duration: 10000,
+    ...(isSuccess ? {} : {
       style: {
         background: '#FEE2E2',
         color: '#B91C1C',
         border: '1px solid #FCA5A5'
       }
-    });
-  } finally {
-    setIsWaitingForResult(false);
-    setTimeout(() => setPaymentStatus('idle'), 3000);
-  }
+    })
+  });
+  
+  setIsWaitingForResult(false);
+  setShowResultModal(true);
+  setPaymentStatus('idle');
 };
 
 useEffect(() => {
@@ -1381,15 +1436,28 @@ const handleTrotro = async (option: number) => {
     <div className="bg-gradient-to-b from-[#1E1E2D] to-[#2D2D42] rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-xl">
       <div className="flex flex-col items-center text-center space-y-4">
         <div className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl ${
-          gameResult.status === 'success' ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
-        }`}>
-          {gameResult.status === 'success' ? '🎉' : '❌'}
-        </div>
+  gameResult.status === 'success' 
+    ? 'bg-green-900/30 text-green-400' 
+    : gameResult.status === 'error' 
+      ? 'bg-red-900/30 text-red-400' 
+      : 'bg-blue-900/30 text-blue-400'
+}`}>
+  {gameResult.status === 'success' 
+    ? '🎉' 
+    : gameResult.status === 'error' 
+      ? '❌' 
+      : '⏳'}
+</div>
         <h3 className="text-2xl font-bold text-white">
-          {gameResult.status === 'success' ? 'Success!' : 'Game Complete'}
-        </h3>
+  {gameResult.status === 'success' 
+    ? 'Success!' 
+    : gameResult.status === 'error' 
+      ? 'Game Complete' 
+      : 'Processing...'}
+</h3>
         <p className="text-gray-300 text-center mb-6">{gameResult.message}</p>
         
+        {!isWaitingForResult && (
         <Button 
           onClick={() => {
             setShowResultModal(false);
@@ -1399,6 +1467,7 @@ const handleTrotro = async (option: number) => {
         >
           Done
         </Button>
+      )}
       </div>
     </div>
   </div>
