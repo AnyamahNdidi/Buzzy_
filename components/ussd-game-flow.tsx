@@ -4,15 +4,98 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from "@/components/ui/button"
-import { X, ArrowRight } from "lucide-react"
+import { X, ArrowRight, Sparkles, Gem, Bus, Utensils } from "lucide-react"
 import { useJollofAmountWebMutation, useStartMissionMutation, useJollofPaymentMutation, useJollofGameFinishMutation } from '@/lib/redux/api/ghanaJollofApi';
 import { secureStorage } from '@/lib/redux/api/ghanaJollofApi';
-import {  trotroSecureStorage } from '@/lib/redux/api/trotroApi';
+import { trotroSecureStorage } from '@/lib/redux/api/trotroApi';
 import { usePlayTrotroMutation } from '@/lib/redux/api/trotroApi';
 import { useSubmitTrotroPaymentMutation } from '@/lib/redux/api/trotroApi';
-import { goldSecureStorage, useSubmitMultiplierMutation, useSubmitGoldPaymentMutation  } from '@/lib/redux/api/goldWebApi';
-import { useConfirmPaymentMutation, useGameOverWebMutation  } from '@/lib/redux/api/gameAccessWebApi';
+import { goldSecureStorage, useSubmitMultiplierMutation, useSubmitGoldPaymentMutation } from '@/lib/redux/api/goldWebApi';
+import { useConfirmPaymentMutation, useGameOverWebMutation } from '@/lib/redux/api/gameAccessWebApi';
 import { toast } from 'sonner';
+
+interface GameLoadingProps {
+  gameName: string;
+}
+
+const GameLoading: React.FC<GameLoadingProps> = ({ gameName }) => {
+  const gameThemes = {
+    'Ghana Jollof': {
+      title: 'Cooking up something delicious...',
+      icon: <Utensils className="w-16 h-16 text-yellow-400 animate-pulse" />,
+      gradient: 'from-yellow-400 via-orange-500 to-yellow-400',
+      bgGradient: 'from-[#1E1E2D] to-[#2D2D42]',
+      emoji: '🍲',
+      description: 'Your jollof is being prepared with special ingredients...',
+      particles: 5,
+      particleColor: 'bg-yellow-400/30'
+    },
+    'Gold Mine': {
+      title: 'Mining for gold...',
+      icon: <Gem className="w-16 h-16 text-yellow-500 animate-pulse" />,
+      gradient: 'from-yellow-500 via-amber-600 to-yellow-500',
+      bgGradient: 'from-gray-900 to-gray-800',
+      emoji: '⛏️',
+      description: 'Digging deep for golden opportunities...',
+      particles: 7,
+      particleColor: 'bg-yellow-500/30'
+    },
+    'Trotro': {
+      title: 'On the move...',
+      icon: <Bus className="w-16 h-16 text-blue-400 animate-pulse" />,
+      gradient: 'from-blue-400 via-indigo-500 to-blue-400',
+      bgGradient: 'from-slate-900 to-slate-800',
+      emoji: '🚌',
+      description: 'Your journey is being processed...',
+      particles: 3,
+      particleColor: 'bg-blue-400/30'
+    }
+  };
+
+  const theme = gameThemes[gameName as keyof typeof gameThemes] || gameThemes['Ghana Jollof'];
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className={`bg-gradient-to-b ${theme.bgGradient} rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-xl`}>
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="w-40 h-40 relative flex items-center justify-center">
+            <div className="text-7xl mb-2 ">{theme.emoji}</div>
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(theme.particles)].map((_, i) => (
+                <div
+                  key={i}
+                  className={`absolute rounded-full ${theme.particleColor}`}
+                  style={{
+                    width: `${Math.random() * 12 + 5}px`,
+                    height: `${Math.random() * 12 + 5}px`,
+                    top: `${Math.random() * 100}%`,
+                    left: `${Math.random() * 100}%`,
+                    animation: `float ${2 + Math.random() * 3}s infinite ease-in-out`,
+                    animationDelay: `${Math.random() * 2}s`,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+          <h3 className="text-xl font-semibold text-white animate-pulse">
+            {theme.title}
+          </h3>
+          <p className="text-gray-300 text-sm">{theme.description}</p>
+          <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+            <div 
+              className={`h-full rounded-full bg-gradient-to-r ${theme.gradient}`}
+              style={{ 
+                width: '100%',
+                backgroundSize: '200% 100%',
+                animation: 'progress 2s linear infinite, progressPulse 1.5s ease-in-out infinite'
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface USSDGameFlowProps {
   game: any;
@@ -40,7 +123,7 @@ export function USSDGameFlow({ game, onClose, onComplete, startGameResult, goldR
   const [currentStep, setCurrentStep] = useState(0);
   const [trotroResult, setTrotroResult] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [selectedOption, setSelectedOption] = useState<number | null | string>(null);
   const [showResultModal, setShowResultModal] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [amount, setAmount] = useState('');
@@ -48,7 +131,7 @@ export function USSDGameFlow({ game, onClose, onComplete, startGameResult, goldR
   const [pin, setPin] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [gameResult, setGameResult] = useState<any>(null);
-  const [selectedIngredient, setSelectedIngredient] = useState<number | null>(null);
+  const [selectedIngredient, setSelectedIngredient] = useState<number | null | string>(null);
  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
 const isPaymentLoading = paymentStatus === 'processing';
 const [triggerJollofPayment] = useJollofPaymentMutation();
@@ -60,7 +143,7 @@ const pollingRef = useRef<NodeJS.Timeout | null>(null);
 const [confirmPayment, { isLoading: isConfirmingPayment }] = useConfirmPaymentMutation();
 const [gameOverWeb] = useGameOverWebMutation();
 
-console.log('goldResult', goldResult);
+
 
 
 
@@ -73,6 +156,8 @@ console.log('goldResult', goldResult);
 
 const [ingredientOptions, setIngredientOptions] = useState<{text: string, value: number, disabled?: boolean}[] | null>(null);
 
+const [selectedIngredientText, setSelectedIngredientText] = useState<string>('');
+
 useEffect(() => {
   if (game.name === 'Ghana Jollof' && currentStep === 1) { // Check if we're on the ingredient selection step
     const loadOptions = () => {
@@ -80,7 +165,7 @@ useEffect(() => {
         const storedOptions = secureStorage.getSession('ingredient_options');
         if (storedOptions) {
           const parsedOptions = JSON.parse(storedOptions);
-          console.log('Loaded ingredient options:', parsedOptions);
+          
           setIngredientOptions(parsedOptions);
         } else {
           console.log('No ingredient options found in storage');
@@ -151,7 +236,7 @@ useEffect(() => {
       text: isPaymentLoading ? 'PROCESSING...' : 'CONFIRM', 
       value: 1,
       onClick: (e: React.MouseEvent) => {
-        console.log('Confirm button clicked'); // Debug log
+        
         e.preventDefault(); // Prevent default form submission
         handlePaymentConfirmation(parseFloat(amount));
       },
@@ -221,7 +306,7 @@ useEffect(() => {
       text: isPaymentLoading ? 'PROCESSING...' : 'CONFIRM', 
       value: 1,
       onClick: (e: React.MouseEvent) => {
-        console.log('Confirm button clicked'); // Debug log
+        
         e.preventDefault(); // Prevent default form submission
         handlePaymentConfirmation(parseFloat(amount));
       },
@@ -300,7 +385,7 @@ options: [
       text: isPaymentLoading ? 'PROCESSING...' : 'CONFIRM', 
       value: 1,
       onClick: (e: React.MouseEvent) => {
-        console.log('Confirm button clicked'); // Debug log
+        // Debug log
         e.preventDefault(); // Prevent default form submission
         handlePaymentConfirmation(parseFloat(amount));
       },
@@ -328,21 +413,21 @@ options: [
   const currentGame = gameFlows[game.name as keyof typeof gameFlows] || gameFlows['Ghana Jollof'];
   const currentStepData = currentGame.steps[Math.min(currentStep, currentGame.steps.length - 1)];
 
-  const handleOptionSelect = (option: number) => {
+  const handleOptionSelect = (option: number | string) => {
     setSelectedOption(option);
     
     if (game.name === 'Ghana Jollof') {
       handleGhanaJollof(option);
     } else if (game.name === 'Gold Mine') {
-      handleGoldMine(option);
+      handleGoldMine(Number(option));
     } else if (game.name === 'Trotro') {
-      handleTrotro(option);
+      handleTrotro(Number(option));
     }
   };
 
- const handleGhanaJollof = async (option: number) => {
+ const handleGhanaJollof = async (option: number | string) => {
   if (currentStep === 0) {
-    if (option === 1) {
+    if (option === 1 || option === 'Start mission') {
       // Get the stored session data
       const sessionId = secureStorage.getSession('session_id');
       const gameNumber = secureStorage.getSession('game_number');
@@ -388,9 +473,14 @@ options: [
   } 
 
   else if (currentStep === 1) {
-    // Check if the selected option is a valid ingredient (non-zero value)
-    if (option > 0) {
-      setSelectedIngredient(option);
+    // Find the selected ingredient
+    const selectedOption = typeof option === 'string' 
+      ? ingredientOptions?.find(opt => opt.text === option)
+      : ingredientOptions?.find(opt => opt.value === option);
+      
+    if (selectedOption) {
+      setSelectedIngredient(selectedOption.value);
+      setSelectedIngredientText(selectedOption.text);
       setCurrentStep(2);
     } else {
       setGameResult({
@@ -420,11 +510,16 @@ const handleAmountSubmit = async (amount: number) => {
       return;
     }
 
+    // Find the selected ingredient text from ingredientOptions
+    const selectedIngredientText = ingredientOptions?.find(
+      opt => opt.value === selectedIngredient
+    )?.text || selectedIngredient.toString();
+
     const result = await jollofAmountWeb({
       amount,
       number,
-      user_ingredient_selection: selectedIngredient.toString(),
-      network,  // Make sure this is included
+      user_ingredient_selection: selectedIngredientText, // Send the ingredient text
+      network,
       game_name: gameName,
       session_id: sessionId
     }).unwrap();
@@ -461,7 +556,7 @@ const handlePaymentConfirmation = async (amount: number) => {
   try {
     // Get data based on the current game
     let number, network, sessionId, gameName, gameAmount;
-    console.log('Current game:', game.name); 
+    
     
     switch(game.name) {
       case 'Gold Mine':
@@ -481,12 +576,12 @@ const handlePaymentConfirmation = async (amount: number) => {
       case 'Ghana Jollof':
       default:
         number = secureStorage.getSession('current_number');
-        network = secureStorage.getSession('current_game_name');
+        network = secureStorage.getSession('current_network');
         sessionId = secureStorage.getSession('current_session');
         gameName = process.env.NEXT_PUBLIC_JELLOFWEB || 'GHANA_JOLLOF';
         gameAmount = secureStorage.getSecure('current_amount');
     }
-    console.log("data passed:", number, gameAmount, network, sessionId, gameName)
+   
 
     if (!number || !network || !sessionId) {
       throw new Error('Missing required payment information. Please start over.');
@@ -1178,10 +1273,16 @@ const handleTrotro = async (option: number) => {
     } else if (currentStep === 1) {
       await handleMiningOptionSelect(option.value);
     } else {
+      
       handleOptionSelect(option.value);
     }
   } else {
-    handleOptionSelect(option.value);
+    if (game.name === 'Ghane Jollof'){
+       handleOptionSelect(option.text);
+    }else{
+      handleOptionSelect(option.value);
+    }
+    
   }
 }}
               >
@@ -1216,53 +1317,9 @@ const handleTrotro = async (option: number) => {
         </div>
         {/* Add these components here */}
     {isWaitingForResult && (
-  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div className="bg-gradient-to-b from-[#1E1E2D] to-[#2D2D42] rounded-2xl p-6 w-full max-w-md border border-white/10 shadow-xl">
-      <div className="flex flex-col items-center text-center space-y-4">
-        <div className="w-40 h-40 relative">
-          <div className="relative w-full h-full">
-            {/* Animated Jollof Image */}
-            <img 
-              src="/smokie.png" 
-              alt="Processing your game..." 
-              className="w-full h-full object-contain animate-bounce-slow"
-            />
-            {/* Floating particles for extra effect */}
-            <div className="absolute inset-0 overflow-hidden">
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute rounded-full bg-yellow-400/30"
-                  style={{
-                    width: `${Math.random() * 10 + 5}px`,
-                    height: `${Math.random() * 10 + 5}px`,
-                    top: `${Math.random() * 100}%`,
-                    left: `${Math.random() * 100}%`,
-                    animation: `float ${2 + Math.random() * 3}s infinite ease-in-out`,
-                    animationDelay: `${Math.random() * 2}s`,
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-        <h3 className="text-xl font-semibold text-white animate-pulse">Processing Your Game</h3>
-        <p className="text-gray-300 text-sm">Cooking up something delicious...</p>
-       <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-  <div 
-    className="bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400 h-full rounded-full"
-    style={{ 
-      width: '100%',
-      backgroundSize: '200% 100%',
-      animation: 'progress 2s linear infinite, progressPulse 1.5s ease-in-out infinite'
-    }}
-  />
-</div>
-      </div>
-    </div>
-  </div>
+    <GameLoading gameName={game.name} />)
 
-)}
+}
 {/* Result Modal */}
 {showResultModal && gameResult && (
   <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">

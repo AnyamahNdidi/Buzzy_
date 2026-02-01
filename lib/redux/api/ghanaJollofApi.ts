@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_GHANA_JOLLOF_API_URL || 'https://buzzycashghana.viaspark.site';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://buzzycashghana.viaspark.site';
 
 
 
