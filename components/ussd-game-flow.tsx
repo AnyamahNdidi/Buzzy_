@@ -928,7 +928,7 @@ const startPollingGameStatus = async (retryCount = 0, maxRetries = 9) => {
 
     // Call the gameOverWeb endpoint
     const response = await gameOverWeb({ number }).unwrap();
-    console.log("API Response:", response);
+ 
 
     // Only process the response if we've reached the last attempt
     if (retryCount >= maxRetries - 1) {
@@ -1096,7 +1096,7 @@ const handleTrotro = async (option: number) => {
     
     try {
       // Debug: Log all session storage items
-      console.log('All session storage items:');
+      
       Object.keys(sessionStorage).forEach(key => {
         console.log(`${key}:`, sessionStorage.getItem(key));
       });
@@ -1127,7 +1127,7 @@ const handleTrotro = async (option: number) => {
       secureStorage.setSession('trotro_network', result.network)
       secureStorage.setSession('trotro_session', result.session)
      
-      console.log("result:", result)
+     
       
       // Move to the next step
       setCurrentStep(2);

@@ -110,9 +110,9 @@ const secureStorage = {
     try {
       // First try with the exact key, then with 'trotro_' prefix
       const prefixedKey = key.startsWith('trotro_') ? key : `trotro_${key}`;
-      console.log('getSession - Looking for key:', prefixedKey);
+     
       const value = sessionStorage.getItem(prefixedKey);
-      console.log('getSession - Found value:', value);
+     
       return value;
     } catch (error) {
       console.error('Failed to get from sessionStorage:', error);
