@@ -91,12 +91,18 @@ export function HeroSection() {
             className="z-10"
           >
             <Button
-              size="lg"
-              className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 font-semibold px-8 py-6 rounded-full text-lg group"
-            >
-              Play Now
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Button>
+            size="lg"
+            className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 font-semibold px-8 py-6 rounded-full text-lg group"
+            onClick={() => {
+              const gameSection = document.getElementById('game-selection');
+              if (gameSection) {
+                gameSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
+                Play Now
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
           </motion.div>
 
           {/* Avatar Group */}
@@ -136,8 +142,15 @@ export function HeroSection() {
             whileTap={{ scale: 0.98 }}
           >
             <Button
-              size="lg"
+                  size="lg"
               className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 font-semibold px-8 py-6 rounded-full text-lg group"
+
+              onClick={() => {
+                const gameSection = document.getElementById('game-selection');
+                if (gameSection) {
+                  gameSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
             >
               Play now
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />

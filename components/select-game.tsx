@@ -27,6 +27,7 @@ export function SelectGame() {
       id: 1,
       name: "Ghana Jollof",
       shortCode: "*245#",
+
       color: "from-yellow-400 to-orange-500",
       image: "1.jpeg",
       tagline: "THE SECRET TO WINNING",
@@ -161,7 +162,7 @@ const handleStartGame = async () => {
 
   return (
     <>
-      <section className="py-20 px-4 bg-gradient-to-b from-background to-card/30">
+      <section id="game-selection" className="py-20 px-4 bg-linear-to-b from-background to-card/30">
         <div className="container mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Select Your Game</h2>

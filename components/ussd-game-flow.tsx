@@ -436,7 +436,7 @@ options: [
 
       if (!sessionId || !gameNumber || !network || !gameName) {
         toast.error('Session expired. Please start the game again.');
-        console.error('Missing session data');
+        
         return;
       }
 
@@ -587,8 +587,7 @@ const handlePaymentConfirmation = async (amount: number) => {
       throw new Error('Missing required payment information. Please start over.');
     }
 
-    // Generate a unique transaction ID
-    const transactionId = `tx_${Date.now()}`;
+
     // secureStorage.setSession('current_transaction_id', transactionId);
 
     // Prepare and send payment data
@@ -645,77 +644,6 @@ const handlePaymentConfirmation = async (amount: number) => {
     setIsWaitingForResult(false);
   }
 };
-
-// const handleConfirm = async () => {
-//   if (isPaymentLoading) return;
-  
-//   setPaymentStatus('processing');
-  
-//   try {
-//     // Generate a unique transaction ID
-//     const transactionId = `tx_${Date.now()}`;
-    
-//     // Store transaction ID for reference
-//     secureStorage.setSession('current_transaction_id', transactionId);
-    
-//     // Prepare payment data
-//     const paymentData = {
-//       confirmed: true,
-//       amount: parseFloat(secureStorage.getSession('current_amount') || '0'),
-//       number: secureStorage.getSession('current_number') || '',
-//       network: secureStorage.getSession('current_network') || 'MTN',
-//       game_name: secureStorage.getSession('current_game_name') || 'WEBJOLLOF',
-//       session_id: secureStorage.getSession('current_session') || ''
-//     };
-//     // Show waiting state
-//     setIsWaitingForResult(true);
-    
-  
-//     // Send payment request
-//     const result = await triggerJollofPayment(paymentData).unwrap();
-//     // console.log('Payment initiated:', result);before we trigger 
-
-//      // Move to the waiting step
-//     setCurrentStep(prev => prev + 1);
-    
-//     setIsWaitingForResult(true);
-
-//     startPollingGameStatus();    
-    
-    
-//   } catch (error:any) {
-//     console.error('Payment failed:', error);
-//      let errorMsg = 'Payment failed. Please try again.';
-    
-//     // Check the error structure from your logs
-//     if (error?.data?.message) {
-//       // Direct message from API
-//       errorMsg = error.data.message;
-//     } else if (error?.data?.error) {
-//       // Error might be in error.data.error (stringified JSON)
-//       try {
-//         const parsedError = JSON.parse(error.data.error);
-//         if (parsedError.message) {
-//           errorMsg = parsedError.message;
-//         }
-//       } catch {
-//         // If it's not JSON, use it as is
-//         errorMsg = error.data.error;
-//       }
-//     } else if (error?.error) {
-//       // Error from RTK Query
-//       errorMsg = error.error;
-//     }
-    
-//     toast.error(errorMsg, {
-//       duration: 5000,
-//       position: 'top-center'
-//     });
-//     setPaymentStatus('error');
-//     setTimeout(() => setPaymentStatus('idle'), 3000);
-//     setIsWaitingForResult(false);
-//   }
-// };
 
 const handleTrotroAmountSubmit  = async (amount: number) => {
   try {
@@ -811,69 +739,6 @@ const stopPolling = () => {
 };
 
 
-// const startPollingGameStatus = async () => {
-//   console.log("start chhecking the result ")
-//   if (pollingRef.current) return; // Prevent duplicates
-
-//   try {
-//     // Get the appropriate data based on the current game
-//     let number, sessionId;
-    
-//     switch (game.name) {
-//       case 'Gold Mine':
-//         number = goldSecureStorage.getSession('gold_number');
-//         sessionId = goldSecureStorage.getSession('gold_session_id');
-//         break;
-//       case 'Trotro':
-//         number = trotroSecureStorage.getSession('trotro_number');
-//         sessionId = trotroSecureStorage.getSession('trotro_session_id');
-//         break;
-//       case 'Ghana Jollof':
-//       default:
-//         number = secureStorage.getSession('current_number');
-//         sessionId = secureStorage.getSession('session_id');
-//     }
-//     console.log("number:", number)
-
-//     if (!number) {
-//       throw new Error('Phone number not found. Please try again.');
-//     }
-
-//     // Call the gameOverWeb endpoint
-//     const result = await gameOverWeb({ number }).unwrap();
-//     console.log("number:", result)
-
-    
-//     // Update the UI with the result
-//     setGameResult({
-//       status: 'success',
-//       message: result.message || 'Game completed successfully!'
-//     });
-
-//     // setGameResult(result);
-//     setIsWaitingForResult(false);
-//     setShowResultModal(true);
-//     setPaymentStatus('success');
-//     toast.success('Game completed successfully!');
-
-//   } catch (error: any) {
-//     console.error('Failed to get game result:', error);
-    
-//     const errorMsg = error?.data?.message || 'Failed to get game result. Please check your SMS for confirmation.';
-//     toast.error(errorMsg);
-    
-//     setGameResult({
-//       status: 'error',
-//       message: errorMsg
-//     });
-  
-//     setShowResultModal(true);
-//     setPaymentStatus('error');
-//   } finally {
-//     setIsWaitingForResult(false);
-//     setTimeout(() => setPaymentStatus('idle'), 3000);
-//   }
-// };
 
 const startPollingGameStatus = async (retryCount = 0, maxRetries = 9) => {
   console.log(`Checking result (attempt ${retryCount + 1} of ${maxRetries + 1})`);
