@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 const navigation = [
   { name: 'Home', href: '/', current: true },
   { name: 'Game History', href: '/game-history', current: false },
-  { name: 'Winners', href: '#', current: false },
+  // { name: 'Winners', href: '#', current: false },
   { name: 'How To Play', href: '/how-to-play', current: false },
   { name: 'Terms', href: '/terms-and-conditions', current: false },
 ]
@@ -42,9 +42,9 @@ export function Header() {
 
           <div className="flex items-center gap-3">
             {/* <ThemeToggle /> */}
-            <Button variant="ghost" className="hidden md:inline-flex text-foreground">
+            {/* <Button variant="ghost" className="hidden md:inline-flex text-foreground">
               Sign In
-            </Button>
+            </Button> */}
             {/* <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
               Join Now
             </Button> */}

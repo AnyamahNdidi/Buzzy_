@@ -165,7 +165,8 @@ const handleStartGame = async () => {
       <section id="game-selection" className="py-20 px-4 bg-linear-to-b from-background to-card/30">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Select Your Game</h2>
+            {/* <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Select Your Game</h2> */}
+             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4"> Participate in Jackpot By Playing Any Game</h2>
             <p className="text-muted-foreground">Choose your favorite game and start winning today!</p>
           </div>
 

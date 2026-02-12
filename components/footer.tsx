@@ -1,4 +1,5 @@
 import { Trophy, Twitter, Instagram, Youtube, MessageSquare } from "lucide-react"
+import GameLink from "./game-link"
 
 export function Footer() {
   return (
@@ -51,11 +52,11 @@ export function Footer() {
                   About Us
                 </a>
               </li>
-              <li>
+              {/* <li>
                 <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
                   How It Works
                 </a>
-              </li>
+              </li> */}
               <li>
                 <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
                   Winners
@@ -70,27 +71,19 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Lotteries</h3>
+            <h3 className="font-semibold text-foreground mb-4">Our Games</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  Mega Millions
-                </a>
+                <GameLink>Ghana Jollof</GameLink>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  Power Ball
-                </a>
+                <GameLink>TroTro</GameLink>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  Daily Draw
-                </a>
+                <GameLink>Gold Mine</GameLink>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  All Games
-                </a>
+                <GameLink>JackPot</GameLink>
               </li>
             </ul>
           </div>
@@ -123,7 +116,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-muted-foreground text-sm">© 2025 LottoWin. All rights reserved.</p>
+          <p className="text-muted-foreground text-sm">© 2026 LottoWin. All rights reserved.</p>
           <div className="flex gap-6 text-sm">
             <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
               Responsible Gaming

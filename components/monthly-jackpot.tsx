@@ -146,12 +146,12 @@ export function MonthlyJackpot() {
       <section className="pb-20 pt-0 px-4 bg-gradient-to-b from-background to-card/30">
         <div className="container mx-auto max-w-4xl">
           <h2 className="text-3xl md:text-5xl font-bold text-center text-foreground mb-12">
-            Participate in Monthly Jackpot By Playing Any Game
+            Participate in Jackpot By Playing Any Game
           </h2>
 
           <div className="bg-card/80 backdrop-blur-sm border-2 border-border rounded-3xl p-8 md:p-12 shadow-2xl">
             <div className="text-center mb-8">
-              <h3 className="text-2xl md:text-3xl font-bold text-foreground">Monthly Jackpot</h3>
+              <h3 className="text-2xl md:text-3xl font-bold text-foreground">Jackpot</h3>
               <div className="text-sm text-muted-foreground mt-2">Draw closes 20th of the next month</div>
             </div>
 
@@ -205,7 +205,13 @@ export function MonthlyJackpot() {
             <div className="flex justify-center">
               <Button
                 size="lg"
-                onClick={() => setShowGamesModal(true)}
+                // onClick={() => setShowGamesModal(true)}
+                 onClick={() => {
+                const gameSection = document.getElementById('game-selection');
+                if (gameSection) {
+                  gameSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-12 py-6 text-lg font-bold shadow-lg hover:shadow-primary/50 transition-all"
               >
                 Play Now

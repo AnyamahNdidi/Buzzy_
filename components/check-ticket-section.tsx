@@ -175,7 +175,7 @@ export function CheckTicketSection() {
                   }}
                   className="w-full bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 h-12 text-base"
                 />
-                <p className="text-xs text-gray-400 mt-1">Enter your 11-digit phone number</p>
+                <p className="text-xs text-gray-400 mt-1">Enter your 10-digit phone number</p>
               </div>
 
               <div className="pt-2">
