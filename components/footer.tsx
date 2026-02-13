@@ -1,5 +1,6 @@
 import { Trophy, Twitter, Instagram, Youtube, MessageSquare } from "lucide-react"
 import GameLink from "./game-link"
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -16,6 +17,20 @@ export function Footer() {
             <p className="text-muted-foreground text-sm text-pretty">
               Your trusted lottery platform for winning big. Play smart, win big, and change your life.
             </p>
+
+            <div className="flex items-center gap-2 mb-4">
+  <span className="text-sm text-muted-foreground">In partnership with  Caritas Platform</span>
+  <div className="relative h-10 w-24">
+    <Image 
+      src="/caritas.png" 
+      alt="NLA Caritas Platform" 
+      fill
+      className="object-contain"
+      // width={100}
+      // height={100}
+    />
+  </div>
+</div>
             <div className="flex gap-3">
               <a
                 href="https://www.tiktok.com/@buzzycashgh?is_from_webapp=1&sender_device=pc"
@@ -88,6 +103,8 @@ export function Footer() {
             </ul>
           </div>
 
+          
+
           <div>
             <h3 className="font-semibold text-foreground mb-4">Legal</h3>
             <ul className="space-y-2">
@@ -113,6 +130,7 @@ export function Footer() {
               </li>
             </ul>
           </div>
+          
         </div>
 
         <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
