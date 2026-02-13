@@ -5,61 +5,59 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react"
+import { useCheckTicketMutation } from "@/lib/redux/api/gameAccessWebApi";
 
 interface Result {
   status: "won" | "pending" | "lost"
   prize?: string
   drawNumber?: string
   drawDate?: string
-  ticketNumber?: string
+  gameId?: string
   phoneNumber?: string
 }
 
 export function CheckTicketSection() {
-  const [ticketNumber, setTicketNumber] = useState("")
+  const [gameId, setGameId] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [result, setResult] = useState<Result | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [checkTicket] = useCheckTicketMutation()
 
   const handleCheckTicket = async () => {
-    if (!ticketNumber.trim() || !phoneNumber.trim()) return
+    if (!gameId.trim() || !phoneNumber.trim()) return
     
     setIsLoading(true)
     setResult(null)
     
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
       
-      // Mock response - replace with actual API call
-      const mockResponses: Result[] = [
-        { 
-          status: 'won', 
-          prize: "$2,500", 
-          drawNumber: `DRAW-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`, 
-          drawDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-          ticketNumber: ticketNumber,
-          phoneNumber: phoneNumber
-        },
-        { 
-          status: 'pending', 
-          drawNumber: `DRAW-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`, 
-          drawDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-          ticketNumber: ticketNumber,
-          phoneNumber: phoneNumber
-        },
-        { 
-          status: 'lost', 
-          drawNumber: `DRAW-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`, 
-          drawDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-          ticketNumber: ticketNumber,
-          phoneNumber: phoneNumber
-        }
-      ]
+       const response = await checkTicket({
+        gameId: gameId.trim(),
+        phone_number: phoneNumber.trim()
+      }).unwrap()
+ 
       
-      setResult(mockResponses[Math.floor(Math.random() * mockResponses.length)])
+      const mappedResult: Result = {
+        status: response.status, // Adjust based on actual response
+        prize: response.prize_amount, // Adjust field names as needed
+        drawNumber: response.draw_number,
+        drawDate: response.draw_date,
+        gameId: response.game_id || gameId,
+        phoneNumber: phoneNumber
+      }
+ 
+      setResult(mappedResult)
     } catch (error) {
-      console.error('Error checking ticket:', error)
+       console.error('Error checking ticket:', error)
+      // Handle error state
+      setResult({
+        status: 'lost', // or handle error state differently
+        gameId,
+        phoneNumber,
+        drawNumber: 'N/A',
+        drawDate: new Date().toLocaleDateString()
+      })
     } finally {
       setIsLoading(false)
     }
@@ -111,7 +109,7 @@ export function CheckTicketSection() {
               <h3 className={`text-xl font-bold ${config.textColor} mb-1`}>{config.title}</h3>
               <p className="text-gray-300">{config.message}</p>
               <div className="mt-3 pt-3 border-t border-gray-700/50 space-y-1">
-                <p className="text-sm text-gray-400"><span className="font-medium">Ticket:</span> <span className="font-mono">{result.ticketNumber}</span></p>
+                <p className="text-sm text-gray-400"><span className="font-medium">Game ID:</span> <span className="font-mono">{result.gameId}</span></p>
                 <p className="text-sm text-gray-400"><span className="font-medium">Phone:</span> {result.phoneNumber}</p>
                 <p className="text-sm text-gray-400"><span className="font-medium">Draw #:</span> {result.drawNumber}</p>
                 <p className="text-sm text-gray-400"><span className="font-medium">Draw Date:</span> {result.drawDate}</p>
@@ -147,16 +145,16 @@ export function CheckTicketSection() {
           <Card className="border border-gray-700 bg-gray-800/50 backdrop-blur-sm p-6 md:p-8 mb-6 shadow-xl">
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Ticket Number</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Game ID</label>
                 <Input
                   type="text"
-                  placeholder="e.g. TKT-123456"
-                  value={ticketNumber}
-                  onChange={(e) => setTicketNumber(e.target.value.toUpperCase())}
+                  placeholder="e.g. GAME-123456"
+                  value={gameId}
+                  onChange={(e) => setGameId(e.target.value.toUpperCase())}
                   className="w-full bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 h-12 text-base"
                   maxLength={10}
                 />
-                <p className="text-xs text-gray-400 mt-1">Enter your 6-10 digit ticket number</p>
+                <p className="text-xs text-gray-400 mt-1">Enter your game ID (6-10 characters)</p>
               </div>
               
               <div>
@@ -181,7 +179,7 @@ export function CheckTicketSection() {
               <div className="pt-2">
                 <Button
                   onClick={handleCheckTicket}
-                  disabled={!ticketNumber.trim() || !phoneNumber.trim() || isLoading}
+                  disabled={!gameId.trim() || !phoneNumber.trim() || isLoading}
                   className="w-full h-14 text-base font-semibold bg-gradient-to-r from-[#F97716] to-[#FDB400] hover:from-[#E06A0F] hover:to-[#E8A01E] text-gray-900 hover:shadow-lg hover:shadow-yellow-500/20 transition-all duration-200"
                 >
                   {isLoading ? (

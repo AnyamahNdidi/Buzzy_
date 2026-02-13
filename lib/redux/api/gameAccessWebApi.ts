@@ -44,6 +44,15 @@ export interface CancelGameResponse {
   [key: string]: any;
 }
 
+export interface CheckTicketRequest {
+  gameId: string;
+  phone_number: string;
+}
+
+export interface CheckTicketResponse {
+  [key: string]: any;
+}
+
 // Secure storage utility
 const gameAccessSecureStorage = {
   // Session storage for temporary data
@@ -333,6 +342,15 @@ const gameAccessWebApi = createApi({
         dispatch(gameAccessWebApi.util.resetApiState());
       },
     }),
+
+    // Check Ticket
+    checkTicket: builder.mutation<CheckTicketResponse, CheckTicketRequest>({
+      query: (data) => ({
+        url: '/connect/web/ticket/check/',
+        method: 'POST',
+        body: data,
+      }),
+    }),
   }),
 });
 
@@ -342,6 +360,7 @@ export const {
   useGameOverWebMutation,
   useConfirmPaymentMutation,
   useCancelGameMutation,
+  useCheckTicketMutation,
   useLogoutMutation,
 } = gameAccessWebApi;
 
