@@ -2,28 +2,74 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronDown, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
 const faqs = [
   {
-    category: "Wallet",
-    question: "How do I fund my wallet? ",
-    answer: "You can fund your wallet using bank transfer, card payment, or cryptocurrency. Simply go to your wallet page and click 'Add Funds' to see all available options."
+    category: "General",
+    question: "What is Buzzycash?",
+    answer: "Buzzycash is a digital gaming platform that allows users to play engaging games and stand a chance to win cash rewards through USSD, Mobile Web, and Telegram."
   },
   {
-    category: "Wallet",
-    question: "How do I withdraw my winnings?",
-    answer: "Navigate to your wallet, click 'Withdraw', enter the amount and your preferred payment method. Withdrawals are processed within 24-48 hours."
+    category: "Access",
+    question: "How can I access Buzzycash?",
+    answer: "You can access Buzzycash through:\n• USSD: Dial *245#\n• Mobile Web: Visit the official Buzzycash website\n• Telegram: Via the official Buzzycash Telegram channel."
   },
   {
-    category: "Lottery",
-    question: "How do I play the lottery?",
-    answer: "Select your preferred lottery game, choose your numbers or use quick pick, confirm your ticket purchase, and wait for the draw. It's that simple!"
+    category: "Access",
+    question: "Do I need Internet to play?",
+    answer: "If you are using USSD (*245#), you do not need internet access. However, Mobile Web and Telegram require an internet connection."
   },
   {
-    category: "Account",
-    question: "How do I verify my account?",
-    answer: "Go to Settings > Verification, upload a valid government ID and proof of address. Verification typically takes 1-2 business days."
+    category: "Games",
+    question: "What games are available on Buzzycash?",
+    answer: "Buzzycash currently offers:\n• Ghana Jollof\n• Gold Mine\n• Trotro"
   },
+  {
+    category: "Payment",
+    question: "What is the minimum amount required to play?",
+    answer: "The minimum stake to play on Buzzycash is GHS 1. Players may stake higher amounts based on their preference."
+  },
+  {
+    category: "How to Play",
+    question: "How do I play?",
+    answer: "Dial *245#, select your preferred game, choose your stake amount, confirm the transaction, and enter your PIN to complete your play."
+  },
+  {
+    category: "Promotions",
+    question: "How do I qualify for promotions or raffles?",
+    answer: "To qualify for any ongoing promotion or raffle, simply play with the required minimum stake. The more you play, the higher your chances of qualifying."
+  },
+  {
+    category: "Winning",
+    question: "How are winners selected?",
+    answer: "Winners are selected through a secure and transparent system process in accordance with the rules of each game or promotional draw."
+  },
+  {
+    category: "Winning",
+    question: "How will I know if I win?",
+    answer: "All winners receive an official SMS notification confirming their win."
+  },
+  {
+    category: "Winning",
+    question: "How are winnings paid?",
+    answer: "Winnings are credited directly to the same Mobile Money wallet used for the transaction."
+  },
+  {
+    category: "General",
+    question: "Can I play multiple times?",
+    answer: "Yes. There is no restriction on the number of times a user can play."
+  },
+  {
+    category: "Eligibility",
+    question: "Who is eligible to play?",
+    answer: "Buzzycash is available to individuals who meet the legal age requirement and who reside in Ghana or have a valid Ghanaian mobile number."
+  },
+  {
+    category: "Support",
+    question: "What should I do if my transaction fails?",
+    answer: "If a transaction fails but your wallet is debited, the amount will be automatically reversed."
+  }
 ]
 
 export function FAQSection() {
@@ -72,7 +118,7 @@ export function FAQSection() {
         <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
           {/* FAQ Accordion */}
           <div className="space-y-4">
-            {faqs.map((faq, index) => (
+            {faqs?.slice(0, 4).map((faq, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, x: -30 }}
@@ -129,13 +175,20 @@ export function FAQSection() {
             ))}
 
             {/* More Link */}
-            <motion.button 
+            {/* <motion.button 
               className="flex items-center gap-2 text-[#FDB400] font-semibold mt-6"
               whileHover={{ x: 8 }}
               transition={{ duration: 0.2 }}
             >
               More <ArrowRight className="w-4 h-4" />
-            </motion.button>
+            </motion.button> */}
+            <Link 
+  href="/faq"
+  className="flex items-center gap-2 text-[#FDB400] hover:text-yellow-400 font-semibold mt-6 group"
+>
+  View All FAQs 
+  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+</Link>
           </div>
 
           {/* Illustration Placeholder */}

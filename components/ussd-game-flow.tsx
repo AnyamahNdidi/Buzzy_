@@ -740,8 +740,8 @@ const stopPolling = () => {
 
 
 
-const startPollingGameStatus = async (retryCount = 0, maxRetries = 9) => {
-  console.log(`Checking result (attempt ${retryCount + 1} of ${maxRetries + 1})`);
+const startPollingGameStatus = async (retryCount = 0, maxRetries = 15) => {
+  // console.log(`Checking result (attempt ${retryCount + 1} of ${maxRetries})`);
   if (pollingRef.current) return;
 
   try {
@@ -755,8 +755,8 @@ const startPollingGameStatus = async (retryCount = 0, maxRetries = 9) => {
       setShowResultModal(true);
     }
 
-    // Progressive delay: 5s x 9 = 45s total
-    const delay = 5000;
+    // Progressive delay: 3s x 15 = 45s total
+    const delay = 3000;
     
     // Show countdown for next check
     if (retryCount < maxRetries) {
