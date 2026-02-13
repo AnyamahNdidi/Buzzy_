@@ -161,7 +161,7 @@ export default function FAQPage() {
           ))}
         </div>
 
-        <div className="mt-12 text-center">
+        {/* <div className="mt-12 text-center">
           <p className="text-slate-400 mb-6">Still have questions? Contact our support team for assistance.</p>
           <Link
             href="/contact"
@@ -169,7 +169,7 @@ export default function FAQPage() {
           >
             Contact Support
           </Link>
-        </div>
+        </div> */}
       </div>
 
       <Footer />
